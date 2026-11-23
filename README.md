@@ -16,7 +16,7 @@ Ferramentas como o Presidio vão bem em inglês, mas não têm reconhecedores pa
 | Demo (Space) | [huggingface.co/spaces/brennocm/PII-BR](https://huggingface.co/spaces/brennocm/PII-BR) |
 | Modelo | [huggingface.co/brennocm/PII-BR](https://huggingface.co/brennocm/PII-BR) |
 | Dataset | [huggingface.co/datasets/brennocm/PII-BR](https://huggingface.co/datasets/brennocm/PII-BR) |
-| Artigo | [brennocm.github.io/articles/pt-br/pii-br.html](https://brennocm.github.io/articles/pt-br/pii-br.html) |
+| Artigo | [em português](https://brennocm.github.io/articles/pt-br/pii-br.html) e [em inglês](https://brennocm.github.io/articles/en-us/pii-br.html) |
 | Código | este repositório |
 
 ## Entidades
