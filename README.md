@@ -46,10 +46,10 @@ texto = "Sou Ana Lima, CPF 123.456.789-09, whats (11) 98765-4321."
 spans = detector.detect(texto)
 
 masker = Masker()  # um sal secreto por sessão
-masker.mask(texto, spans, "redact")     # Sou [NOME], CPF [CPF], whats [TELEFONE].
-masker.mask(texto, spans, "partial")    # Sou [NOME], CPF ***.456.789-**, whats (**) *****-4321.
+masker.mask(texto, spans, "redact")  # Sou [NOME], CPF [CPF], whats [TELEFONE].
+masker.mask(texto, spans, "partial")  # Sou [NOME], CPF ***.456.789-**, whats (**) *****-4321.
 masker.mask(texto, spans, "pseudonym")  # Sou <NOME_1>, CPF <CPF_1>, whats <TELEFONE_1>.
-masker.mask(texto, spans, "synthetic")  # Sou Gabriela Reis, CPF 609.746.327-83, whats (41) 94713-2524.
+masker.mask(texto, spans, "synthetic")  # Sou Gabriela Reis, CPF 609.746.327-83, ...
 ```
 
 O núcleo (`pii_br`) só usa a biblioteca padrão; o modelo é o extra opcional `[model]`.

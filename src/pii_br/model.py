@@ -60,7 +60,7 @@ class NerModel:
     def predict(self, text: str) -> list[Span]:
         if not text.strip():
             return []
-        raw = cast("list[dict[str, Any]]", self._pipe(text))
+        raw = cast(list[dict[str, Any]], self._pipe(text))
         spans: list[Span] = []
         for item in raw:
             label = str(item["entity_group"])
