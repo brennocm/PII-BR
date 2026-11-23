@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "Detecção e mascaramento de dados pessoais (PII) em português do Brasil para a LGPD"
 readme = "README.md"
 license = "Apache-2.0"
+license-files = ["LICENSE"]
 requires-python = ">=3.11"
 # O núcleo (validadores, recognizers, fusão, mascaramento) só usa a biblioteca padrão.
 dependencies = []
