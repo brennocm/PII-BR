@@ -4,46 +4,108 @@
 
 # PII-BR
 
-Detecção e mascaramento de dados pessoais (PII) em textos em português do Brasil, pensado para quem precisa anonimizar logs, tickets e documentos sob a LGPD.
+Detecção e mascaramento de dados pessoais (PII) em textos em português do Brasil, para quem precisa anonimizar logs, tickets, e-mails e documentos sob a LGPD.
 
-Ferramentas como o Presidio vão bem em inglês, mas não reconhecem CPF, CNPJ, RG ou CEP. Este projeto combina validação determinística (dígito verificador, DDD, faixa de CEP) com um modelo NER treinado em português.
+Ferramentas como o Presidio vão bem em inglês, mas não têm reconhecedores para CPF, CNPJ, RG ou CEP. O PII-BR combina um modelo NER treinado em português com regras determinísticas que validam dígito verificador, DDD e CEP, e inclui o **CNPJ alfanumérico** emitido desde julho de 2026.
 
-> **Status:** fase 1 de 5. O pacote de validadores e recognizers está pronto; dataset, modelo e demo vêm a seguir. Plano completo em [SPEC.md](SPEC.md).
+| Peça | Onde |
+| --- | --- |
+| Demo (Space) | `huggingface.co/spaces/<usuario>/PII-BR` |
+| Modelo | `huggingface.co/<usuario>/PII-BR` |
+| Dataset | `huggingface.co/datasets/<usuario>/PII-BR` |
+| Código | este repositório |
 
-## O que já funciona
+## Entidades
 
-```python
-from pii_br import recognize
+| Entidade | Exemplo | Detecção |
+| --- | --- | --- |
+| `NOME` | Maria Aparecida Souza | Modelo |
+| `CPF` | 123.456.789-09 | Regex + dígito verificador + modelo |
+| `CNPJ` | 12.ABC.345/01DE-35 | Regex + dígito verificador (numérico e alfanumérico) + modelo |
+| `RG` | 12.345.678-9 | Modelo + contexto |
+| `TELEFONE` | (11) 98765-4321 | Regex + DDD válido + modelo |
+| `EMAIL` | maria.souza@example.com | Regex |
+| `ENDERECO` | Rua das Flores, 123, ap. 42 | Modelo |
+| `CEP` | 01310-100 | Regex + contexto |
+| `DATA_NASC` | nascida em 03/07/1990 | Modelo |
 
-texto = "Sou Ana, CPF 123.456.789-09, CNPJ 12.ABC.345/01DE-35, whats (11) 98765-4321."
-for span in recognize(texto):
-    print(span.label, span.text, span.valid)
-# CPF 123.456.789-09 True
-# CNPJ 12.ABC.345/01DE-35 True
-# TELEFONE (11) 98765-4321 True
+Documento com formato certo e dígito errado vira alerta de "possível documento inválido" e é mascarado mesmo assim, porque pode ser um documento real digitado com erro.
+
+## Uso
+
+```bash
+pip install "pii-br[model] @ git+https://github.com/<usuario>/PII-BR"
 ```
 
-- **CPF e CNPJ** com e sem pontuação, incluindo o **CNPJ alfanumérico** emitido desde julho de 2026 (IN RFB nº 2.229/2024).
-- Documento com formato certo e dígito errado é retornado com `valid=False`, como alerta, em vez de ser ignorado.
-- **Telefone** com DDD validado e números 0800/4004 descartados; **CEP** e **e-mail**.
-- Números corridos de 11 dígitos (CPF ou celular?) são decididos pela palavra de contexto mais próxima.
-- Validadores conferidos contra fontes independentes (`validate-docbr`, Faker e o exemplo oficial da Receita) em mais de 1.000 casos por documento.
+```python
+from pii_br import Detector, Masker
+from pii_br.model import NerModel
+
+detector = Detector(NerModel("<usuario>/PII-BR"))  # sem modelo, Detector() usa só as regras
+texto = "Sou Ana Lima, CPF 123.456.789-09, whats (11) 98765-4321."
+spans = detector.detect(texto)
+
+masker = Masker()  # um sal secreto por sessão
+masker.mask(texto, spans, "redact")     # Sou [NOME], CPF [CPF], whats [TELEFONE].
+masker.mask(texto, spans, "partial")    # Sou [NOME], CPF ***.456.789-**, whats (**) *****-4321.
+masker.mask(texto, spans, "pseudonym")  # Sou <NOME_1>, CPF <CPF_1>, whats <TELEFONE_1>.
+masker.mask(texto, spans, "synthetic")  # Sou Gabriela Reis, CPF 609.746.327-83, whats (41) 94713-2524.
+```
+
+O núcleo (`pii_br`) só usa a biblioteca padrão; o modelo é o extra opcional `[model]`.
+
+## Como funciona
+
+```mermaid
+flowchart LR
+  X[Texto] --> R[Regex + validação<br/>CPF, CNPJ, telefone, e-mail, CEP]
+  X --> N[Modelo NER<br/>BERTimbau int8, janelas de 256 tokens]
+  R --> F[Fusão de spans]
+  N --> F
+  F --> M[Mascaramento<br/>redação, parcial, pseudônimo, sintético]
+```
+
+- **Fusão:** CPF/CNPJ com dígito válido vence; o modelo vence em nome, endereço e RG; no empate fica o span maior. Quando regex e modelo concordam, o span sai com fonte `ambos`.
+- **Pseudônimo:** HMAC-SHA256 com sal secreto por sessão. Um hash sem sal seria reversível, porque o espaço de CPFs é pequeno o bastante para força bruta.
+- **Dataset:** 38 mil frases sintéticas em 8 domínios (atendimento, WhatsApp, e-mail, contrato, cadastro, ticket, log, boletim de ocorrência), anotadas por construção, mais ~200 frases escritas à mão para o `test_real`.
+
+## Resultados
+
+Os números completos, por entidade e por split, ficam no model card do modelo publicado. Até o treino final rodar, a tabela mostra os baselines (métrica por span, critério de sobreposição, `test_real`):
+
+| Sistema | Precisão | Recall | F1 |
+| --- | --- | --- | --- |
+| Só regex (este pacote, sem modelo) | 0,989 | 0,450 | 0,619 |
+| Presidio (recognizers padrão, spaCy pt) | 0,595 | 0,604 | 0,600 |
+
+A regex acerta 97–100% de CPF, CNPJ, telefone, e-mail e CEP, mas não vê nomes, endereços nem datas. O Presidio vê nomes e endereços, mas tem 0% em CPF, CNPJ e CEP. O pipeline híbrido existe para cobrir as duas metades.
 
 ## Desenvolvimento
 
 Requer [mise](https://mise.jdx.dev) e [uv](https://docs.astral.sh/uv/).
 
 ```bash
-mise install
-uv sync
-mise run check      # formato, lint, tipos (pyright estrito) e testes
-mise run check:all  # o que o CI roda
+mise install && uv sync
+mise run check                                   # formato, lint, pyright estrito, testes
+uv run python -m data_gen.generate --out data    # gera o dataset (reprodutível por seed)
 ```
+
+| Pasta | Conteúdo |
+| --- | --- |
+| `src/pii_br/` | Pacote: validadores, recognizers, fusão, mascaramento, modelo |
+| `data_gen/` | Templates, gerador do dataset, `test_real` e publicação no Hub |
+| `training/` | Notebook de treino (Kaggle/Colab), avaliação com baselines, model card |
+| `space/` | App Gradio do Space |
+| `docs/` | Decisões (ADRs) e o passo a passo de publicação |
+
+O notebook `training/train.ipynb` treina em GPU gratuita do Kaggle em cerca de 30 minutos. Para testar o código em CPU: `SMOKE=1 LOCAL_DATA=$PWD/data uv run --group train jupyter nbconvert --execute training/train.ipynb --to notebook --output-dir outputs/smoke`.
 
 ## Limitações
 
-A ferramenta reduz risco, mas não certifica anonimização. Pela LGPD (art. 12), só é anonimizado o dado que não pode ser revertido por meios razoáveis, e mascarar entidades não remove quasi-identificadores.
+- O modelo é treinado só com dados sintéticos; o `test_real` mede a distância para texto real, mas é pequeno.
+- Não cobre dados sensíveis do art. 5º, II da LGPD (saúde, religião, orientação sexual), placas, cartões, PIS ou CNH.
+- **Não certifica anonimização.** Pela LGPD (art. 12), dado anonimizado é o que não pode ser revertido por meios razoáveis; mascarar entidades não remove quasi-identificadores. Use como redutor de risco.
 
 ## Licença
 
-Apache-2.0.
+Código Apache-2.0, dataset CC-BY-4.0, modelo MIT (a licença do BERTimbau).
