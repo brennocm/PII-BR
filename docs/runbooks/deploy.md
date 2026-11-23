@@ -8,13 +8,15 @@ Passo a passo para colocar no ar as quatro peças do projeto: repositório no Gi
 
 | Item | Evidência |
 | --- | --- |
-| Pacote `pii_br` (validadores, recognizers, fusão, mascaramento, modelo) | `mise run check`: 126 testes, pyright estrito, ruff |
+| Pacote `pii_br` (validadores, recognizers, fusão, mascaramento, modelo) | `mise run check:all`: testes, cobertura ≥ 90%, pyright estrito, ruff, pip-audit (inclusive o torch), gitleaks |
 | Validadores conferidos contra fontes independentes | `tests/test_oracle.py` (validate-docbr, Faker, exemplo oficial da Receita) |
 | Dataset (38.000 frases + 213 do `test_real`), reprodutível por seed | `uv run python -m data_gen.generate --out data`; hash igual entre processos |
 | Card do dataset e montagem do `DatasetDict` | `python -m data_gen.push_dataset --repo x/PII-BR --dry-run` |
 | Notebook de treino | rodou de ponta a ponta em CPU com `SMOKE=1` |
 | Avaliação com baselines (regex e Presidio) | `python -m training.evaluate --data data` |
 | App do Space montado isoladamente | `python scripts/deploy_space.py --repo x/PII-BR --dry-run` + import do app na pasta gerada |
+| Pipeline com um modelo de verdade | Modelo pequeno treinado em CPU (`outputs/mini`): `tests/test_model.py` roda o híbrido num texto de 1.400 caracteres |
+| Versões do Space e do notebook iguais às do `uv.lock` | `tests/test_pins.py` |
 
 **Pronto, mas só verificável depois da publicação**
 
@@ -50,7 +52,7 @@ Regras: nunca cole um token no chat, num commit ou num issue. Um token por final
 ### Passo 0 — Revisões (≈ 1 h 30)
 
 1. **Regra do CNPJ alfanumérico.** Leia o PDF de perguntas e respostas da Receita sobre o CNPJ alfanumérico e confira o que o validador assume: letras A–Z nas 12 primeiras posições, valor `ASCII − 48`, mesmos pesos e dígitos verificadores numéricos. O exemplo oficial `12.ABC.345/01DE-35` já está nos testes. Se a norma excluir alguma letra, me avise.
-2. **`test_real`.** Abra `data_gen/test_real.tsv` (213 frases, uma por linha: `domínio<TAB>texto com [valor](RÓTULO)`). Corrija rótulos, apague frases artificiais e reescreva umas 30 com o seu jeito de escrever. Convenção: títulos como "Sr." e "Dra." ficam fora do span de `NOME`.
+2. **`test_real`.** Abra `data_gen/test_real.tsv` (213 frases, uma por linha: `domínio<TAB>texto com [valor](RÓTULO)`). Corrija rótulos, apague frases artificiais e reescreva umas 30 com o seu jeito de escrever. Convenção: títulos como "Sr." e "Dra." ficam fora do span de `NOME`. Depois da revisão, volte a frase "revisadas por uma pessoa" ao `test_real` em `cards/dataset.md` (ela só pode estar lá quando for verdade).
 3. **Amostra do dataset.** Rode `uv run python -m data_gen.generate --out data` e leia umas 100 linhas de `data/train.jsonl` (ou peça que eu mostre uma amostra formatada).
 
 **Verificar:** `mise run check` continua verde depois das edições.
@@ -62,6 +64,8 @@ Regras: nunca cole um token no chat, num commit ou num issue. Um token por final
 3. **Esperado:** repositório público com a branch `main` e o workflow `ci` rodando em Actions.
 4. **Verificar:** `gh run list --limit 1` mostra `ci` com `completed success`.
 5. **Se falhar:** abra o log com `gh run view --log-failed`; o mais provável é versão de ferramenta, e eu ajusto.
+
+6. **CODEOWNERS e Renovate:** com o repositório criado, me diga o seu usuário do GitHub e eu crio o `.github/CODEOWNERS` (revisão obrigatória em `.github/`, `space/` e `src/`). Instale o app do Renovate em github.com/apps/renovate e dê acesso só ao `PII-BR`; ele lê o `renovate.json` e abre PRs semanais com 14 dias de quarentena para versões novas.
 
 ### Passo 2 — Hugging Face: conta e token (≈ 10 min)
 
@@ -132,6 +136,8 @@ uv run hf upload SEU_USUARIO/PII-BR outputs/model_card/README.md README.md
 6. **Se falhar:** *Logs* do Space. "Modelo indisponível" = o modelo ainda não existe ou é privado (o app segue só com regras). Erro de build = me mande as últimas linhas do log.
 
 A partir daqui, todo push na `main` com CI verde republica o Space sozinho.
+
+**Fixar a versão do modelo (recomendado):** na página do modelo, *Files → History*, copie o hash do último commit. No Space: *Settings → Variables and secrets → New variable* `PII_BR_MODEL_REVISION` = esse hash. Assim, um push acidental (ou malicioso) no repositório do modelo não muda o que o Space roda; para atualizar, troque o hash.
 
 ### Passo 8 — Portfólio (≈ 30 min)
 

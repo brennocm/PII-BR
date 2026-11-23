@@ -55,6 +55,8 @@ masker.mask(texto, spans, "pseudonym")  # Sou <NOME_1>, CPF <CPF_1>, whats <TELE
 masker.mask(texto, spans, "synthetic")  # Sou Gabriela Reis, CPF 609.746.327-83, ...
 ```
 
+O valor sintético é aleatório e passa na validação, então pode coincidir com o documento ou o telefone de uma pessoa real. Use-o para dados de teste, nunca para publicar como se fosse fictício garantido; para isso, prefira `redact` ou `pseudonym`.
+
 O núcleo (`pii_br`) só usa a biblioteca padrão; o modelo é o extra opcional `[model]`.
 
 ## Como funciona
@@ -68,6 +70,7 @@ flowchart LR
   F --> M[Mascaramento<br/>redação, parcial, pseudônimo, sintético]
 ```
 
+- **Limiar:** a confiança mínima vale só para o modelo e é aplicada antes da fusão, para que um palpite fraco nunca apague um achado da regex.
 - **Fusão:** CPF/CNPJ com dígito válido vence; o modelo vence em nome, endereço e RG; no empate fica o span maior. Quando regex e modelo concordam, o span sai com fonte `ambos`.
 - **Pseudônimo:** HMAC-SHA256 com sal secreto por sessão. Um hash sem sal seria reversível, porque o espaço de CPFs é pequeno o bastante para força bruta.
 - **Dataset:** 38 mil frases sintéticas em 8 domínios (atendimento, WhatsApp, e-mail, contrato, cadastro, ticket, log, boletim de ocorrência), anotadas por construção, mais ~200 frases escritas à mão para o `test_real`.
@@ -88,7 +91,8 @@ A regex acerta 97–100% de CPF, CNPJ, telefone, e-mail e CEP, mas não vê nome
 Requer [mise](https://mise.jdx.dev) e [uv](https://docs.astral.sh/uv/).
 
 ```bash
-mise install && uv sync
+mise install && mise run setup                   # dependências + hook de pre-commit
+mise run dev                                     # app em http://127.0.0.1:7860
 mise run check                                   # formato, lint, pyright estrito, testes
 uv run python -m data_gen.generate --out data    # gera o dataset (reprodutível por seed)
 ```

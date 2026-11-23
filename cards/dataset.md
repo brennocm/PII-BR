@@ -50,7 +50,7 @@ Rótulos BIO (`ner_tags`): {{LABELS}}.
 | --- | --- | --- |
 {{SPLIT_TABLE}}
 
-O `test_hard` usa 20% dos templates, sorteados por domínio e nunca vistos no treino: mede generalização para estruturas de frase novas. O `test_real` tem frases escritas à mão fora do sistema de templates, revisadas por uma pessoa, e é o número mais próximo do uso real.
+O `test_hard` usa 20% dos templates, sorteados por domínio e nunca vistos no treino: mede generalização para estruturas de frase novas. O `test_real` tem frases escritas à mão fora do sistema de templates e é o número mais próximo do uso real.
 
 ### Entidades por split
 

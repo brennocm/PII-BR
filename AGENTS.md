@@ -27,7 +27,8 @@ Stack: Python 3.11 + uv — ver `docs/adr/0001-stack.md`. Deploy: Hugging Face H
 
 ## Comandos
 
-- `mise install && uv sync` — prepara o ambiente
+- `mise install && mise run setup` — prepara o ambiente e o hook de pre-commit (lefthook)
+- `mise run dev` — app do Space local (`PII_BR_MODEL=<repo|pasta>` para usar um modelo)
 - `mise run check` — **definição de pronto**: formato, lint, pyright estrito, testes
 - `mise run check:all` — o que o CI roda: check + cobertura ≥ 90%, deptry, vulture, pip-audit, gitleaks
 - `mise run fix` — formatação e lint automáticos
@@ -54,6 +55,10 @@ Stack: Python 3.11 + uv — ver `docs/adr/0001-stack.md`. Deploy: Hugging Face H
 - O gerador tem que ser determinístico entre processos: nunca iterar um `set` de strings ao consumir o `rng` (o hash muda a cada processo). Há teste para isso.
 - `transformers` 5 removeu `warmup_ratio` e `group_by_length`; o notebook fixa `transformers==5.23.0`.
 - `nbconvert --execute` roda com o diretório do notebook como cwd: passe caminhos absolutos em `LOCAL_DATA`/`OUTPUT_DIR`.
+- `Detector`: o limiar e o filtro de entidades são aplicados **antes** da fusão. Filtrar depois deixa um span fraco do modelo tomar o lugar de um achado da regex e sumir, vazando o dado.
+- `merge` nunca descobre um caractere que algum span cobria (teste de propriedade em `test_merge_masking.py`); o modelo só substitui um span da regex que cobre por inteiro.
+- Regex sobre texto do usuário tem que ser linear: o e-mail roda só numa janela em volta de cada `@`. Há teste de tempo em `test_recognizers.py`.
+- `space/requirements.txt` e o `pip install` do notebook fixam as mesmas versões do `uv.lock` (`tests/test_pins.py`); atualize junto.
 - No Space, `gr.State` copia o valor inicial: o `Masker` (com o sal) é criado na primeira requisição de cada sessão, nunca no import.
 
 ## Pronto significa
