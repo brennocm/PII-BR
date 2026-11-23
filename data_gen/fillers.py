@@ -139,6 +139,14 @@ EXTRA_LAST_NAMES = [
     "Wolff",
 ]
 CONNECTORS = ("da", "de", "do", "dos", "das")
+# Sobrenomes que pedem um conector específico ("dos Santos", não "dos Peixoto").
+CONNECTED_SURNAMES = (
+    ("dos", ("Santos", "Reis", "Anjos", "Passos", "Ramos", "Prazeres")),
+    ("das", ("Neves", "Dores", "Chagas", "Graças", "Mercês")),
+    ("do", ("Nascimento", "Carmo", "Prado", "Vale", "Amaral", "Rosário", "Espírito Santo")),
+    ("de", ("Souza", "Oliveira", "Jesus", "Paula", "Assis", "Lima", "Almeida", "Andrade")),
+    ("da", ("Silva", "Costa", "Conceição", "Cruz", "Rocha", "Luz", "Paz", "Mata", "Cunha")),
+)
 
 STREET_TYPES = (
     ("Rua", 40), ("R.", 8), ("Avenida", 15), ("Av.", 10), ("Travessa", 5), ("Tv.", 2),
@@ -245,8 +253,12 @@ class Filler:
         parts = [first]
         for _ in range(self.rng.choice((1, 1, 2, 2, 3))):
             if self.chance(0.3):
-                parts.append(self.pick(CONNECTORS))
-            parts.append(self.last_name())
+                connector, surnames = self.pick(CONNECTED_SURNAMES)
+                surname, extra = self.pick(surnames), [connector]
+            else:
+                surname, extra = self.last_name(), []
+            if surname not in parts:  # evita "de Paula Dias de Paula"
+                parts += [*extra, surname]
         return " ".join(parts)
 
     def cpf(self) -> str:

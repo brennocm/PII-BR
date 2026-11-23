@@ -34,7 +34,11 @@ dev = [
 ]
 hub = ["datasets", "huggingface-hub"]
 train = ["torch", "transformers", "accelerate", "datasets", "seqeval", "nbconvert", "ipykernel"]
-baseline = ["presidio-analyzer", "spacy"]
+baseline = [
+    "presidio-analyzer",
+    "pt-core-news-lg",
+    "spacy",
+]
 space = ["gradio"]
 
 [tool.uv]
@@ -52,19 +56,30 @@ select = ["E", "F", "I", "B", "UP", "S", "SIM", "RUF", "ANN"]
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S101", "S311", "S603", "ANN"]  # S603: subprocess só com sys.executable
 "data_gen/**" = ["S311"]
+# Notebook roda no Kaggle/Colab: anotações de tipo só poluiriam as células.
+"*.ipynb" = ["ANN", "B905", "S603"]
 # random.Random gera dados sintéticos reprodutíveis por seed, não segredos.
 "src/pii_br/validators.py" = ["S311"]
 # O rng do mascaramento sintético gera valores falsos; o segredo (sal do HMAC) usa `secrets`.
 "src/pii_br/masking.py" = ["S311"]
 
 [tool.pyright]
-include = ["src", "tests", "data_gen"]
+include = ["src", "tests", "data_gen", "training"]
 typeCheckingMode = "strict"
 pythonVersion = "3.11"
 
 [[tool.pyright.executionEnvironments]]
 # faker e datasets não têm tipos completos; o gerador só usa chamadas simples deles.
 root = "data_gen"
+extraPaths = ["."]
+reportMissingTypeStubs = false
+reportUnknownMemberType = false
+reportUnknownVariableType = false
+reportUnknownArgumentType = false
+
+[[tool.pyright.executionEnvironments]]
+# presidio e huggingface_hub têm tipos incompletos; a avaliação só usa chamadas simples.
+root = "training"
 extraPaths = ["."]
 reportMissingTypeStubs = false
 reportUnknownMemberType = false
@@ -104,3 +119,4 @@ explicit = true
 
 [tool.uv.sources]
 torch = { index = "pytorch-cpu" }
+pt-core-news-lg = { url = "https://github.com/explosion/spacy-models/releases/download/pt_core_news_lg-3.8.0/pt_core_news_lg-3.8.0-py3-none-any.whl" }
