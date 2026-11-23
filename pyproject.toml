@@ -42,7 +42,7 @@ baseline = [
 space = ["gradio"]
 
 [tool.uv]
-default-groups = ["dev"]
+default-groups = "all"
 # Supply chain: não resolver versões publicadas há menos de alguns dias; atualizar de propósito.
 exclude-newer = "2026-11-16T00:00:00Z"
 

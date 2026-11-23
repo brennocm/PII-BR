@@ -1,0 +1,54 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":semanticCommitTypeAll(chore)",
+    "helpers:pinGitHubActionDigests"
+  ],
+  "timezone": "America/Sao_Paulo",
+  "schedule": [
+    "before 6am on monday"
+  ],
+  "minimumReleaseAge": "14 days",
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": [
+      "before 6am on the first day of the month"
+    ]
+  },
+  "vulnerabilityAlerts": {
+    "minimumReleaseAge": null,
+    "schedule": [
+      "at any time"
+    ]
+  },
+  "packageRules": [
+    {
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
+      "matchCurrentVersion": "!/^0/",
+      "groupName": "dependências (minor e patch)"
+    },
+    {
+      "matchManagers": [
+        "github-actions",
+        "mise"
+      ],
+      "groupName": "ferramentas e actions"
+    },
+    {
+      "description": "Space e notebook fixam as mesmas versões do uv.lock (tests/test_pins.py)",
+      "matchPackageNames": [
+        "torch",
+        "transformers",
+        "gradio",
+        "datasets",
+        "accelerate",
+        "seqeval"
+      ],
+      "groupName": "stack de ML"
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+# Checagens rápidas antes de cada commit; a definição de pronto completa é `mise run check`.
+pre-commit:
+  parallel: true
+  jobs:
+    - name: formato
+      glob: "*.{py,ipynb}"
+      run: uv run ruff format --check {staged_files}
+    - name: lint
+      glob: "*.{py,ipynb}"
+      run: uv run ruff check {staged_files}
+    - name: segredos
+      run: mise exec -- gitleaks git --pre-commit --staged --redact --no-banner

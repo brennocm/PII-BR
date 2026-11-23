@@ -2,6 +2,7 @@
 python = "3.11"
 uv = "0.13.6"
 gitleaks = "8.30.1"
+lefthook = "2.2.2"
 
 [tasks.check]
 description = "Definição de pronto: formato, lint, tipos e testes"
@@ -21,8 +22,17 @@ run = [
   "uv run deptry src",
   "uv run vulture src --min-confidence 80",
   "uv run pip-audit --skip-editable",
+  "uv run python scripts/audit_local_builds.py",
   "gitleaks git --redact --no-banner .",
 ]
+
+[tasks.dev]
+description = "Sobe o app do Space em http://127.0.0.1:7860 (PII_BR_MODEL=<repo|pasta> para usar um modelo)"
+run = "uv run --all-extras --group space python space/app.py"
+
+[tasks.setup]
+description = "Instala dependências e os hooks de pre-commit"
+run = ["uv sync --all-extras", "lefthook install"]
 
 [tasks.fix]
 description = "Aplica todas as correções automáticas"
