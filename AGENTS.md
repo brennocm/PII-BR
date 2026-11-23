@@ -1,4 +1,4 @@
-# pii-br
+# PII-BR
 
 Detector de dados pessoais (PII) em português do Brasil para a LGPD: validadores determinísticos (CPF, CNPJ numérico e alfanumérico, telefone, CEP, e-mail), um modelo NER (BERTimbau) treinado em dados sintéticos e um Space Gradio que destaca e mascara PII. Escopo, fases e critérios de aceite em `SPEC.md`.
 

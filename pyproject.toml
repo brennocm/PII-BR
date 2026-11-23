@@ -1,5 +1,5 @@
 [project]
-name = "pii-br"
+name = "PII-BR"
 version = "0.1.0"
 description = "Detecção e mascaramento de dados pessoais (PII) em português do Brasil para a LGPD"
 readme = "README.md"

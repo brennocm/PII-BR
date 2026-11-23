@@ -16,10 +16,10 @@ O projeto entrega um detector de dados pessoais (PII) em português do Brasil, p
 
 | Peça | Repositório | Conteúdo |
 | --- | --- | --- |
-| Dataset | `datasets/<usuario>/pii-br` | Frases sintéticas anotadas em BIO, splits train/val/test/test-hard/test-real, dataset card |
-| Modelo | `<usuario>/pii-br` | NER fine-tuned, model card com métricas por entidade |
-| Space | `spaces/<usuario>/pii-br` | App Gradio em CPU gratuita: detecta, destaca e mascara |
-| Código | GitHub `<usuario>/pii-br` | Gerador, treino, avaliação, app e validadores, com testes |
+| Dataset | `datasets/<usuario>/PII-BR` | Frases sintéticas anotadas em BIO, splits train/val/test/test-hard/test-real, dataset card |
+| Modelo | `<usuario>/PII-BR` | NER fine-tuned, model card com métricas por entidade |
+| Space | `spaces/<usuario>/PII-BR` | App Gradio em CPU gratuita: detecta, destaca e mascara |
+| Código | GitHub `<usuario>/PII-BR` | Gerador, treino, avaliação, app e validadores, com testes |
 
 ## Viabilidade no hardware atual
 
@@ -215,7 +215,7 @@ O pseudônimo usa HMAC-SHA256 com sal gerado por sessão e nunca exibido, para q
 Um único repositório no GitHub concentra todo o código; o Space recebe só a pasta `space/` e o pacote.
 
 ```text
-pii-br/
+PII-BR/
 ├── src/pii_br/        # pacote: types.py, validators.py, recognizers.py, merge.py, masking.py, model.py
 ├── data_gen/
 │   ├── templates/       # templates por domínio (YAML)
@@ -245,9 +245,9 @@ São 5 fases em sequência; o agente faz quase tudo, e o humano entra em três p
 | Fase | Entrega | Agente faz (local) | Humano faz |
 | --- | --- | --- | --- |
 | 1. Base | Pacote `pii_br` com validadores e recognizers | Código + testes (CPFs/CNPJs válidos e inválidos, formatos, casos de borda, exemplos oficiais do CNPJ alfanumérico) | Conferir a regra do CNPJ alfanumérico no texto da Receita |
-| 2. Dataset | Dataset `pii-br` no Hub | Templates, gerador, splits, card, script de push, rascunho do `test-real` | Criar conta/token HF; revisar \~100 frases geradas e revisar/reescrever o `test-real` |
-| 3. Modelo | Modelo `pii-br` no Hub | Notebook de treino com smoke test local, `evaluate.py`, baselines, model card com os números | Rodar o notebook no Kaggle/Colab com o token nos secrets (≈ 30 min) |
-| 4. Space | Space `pii-br` público | `app.py`, fusão, mascaramento, int8, exemplos, Action de deploy, medição de latência | Criar o Space e o secret no GitHub; testar à mão |
+| 2. Dataset | Dataset `PII-BR` no Hub | Templates, gerador, splits, card, script de push, rascunho do `test-real` | Criar conta/token HF; revisar \~100 frases geradas e revisar/reescrever o `test-real` |
+| 3. Modelo | Modelo `PII-BR` no Hub | Notebook de treino com smoke test local, `evaluate.py`, baselines, model card com os números | Rodar o notebook no Kaggle/Colab com o token nos secrets (≈ 30 min) |
+| 4. Space | Space `PII-BR` público | `app.py`, fusão, mascaramento, int8, exemplos, Action de deploy, medição de latência | Criar o Space e o secret no GitHub; testar à mão |
 | 5. Portfólio | Projeto divulgado | README do GitHub com GIF da demo, rascunho de post para LinkedIn | Publicar e fixar os repositórios no perfil |
 
 Cada fase termina com testes verdes e algo publicado, para que o portfólio tenha valor mesmo se o projeto parar no meio. As fases 1 e 2 e quase toda a 4 rodam inteiras no hardware local; a única dependência de GPU é a execução do notebook na fase 3.

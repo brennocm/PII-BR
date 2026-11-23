@@ -2,7 +2,7 @@
   <img src="docs/assets/logo.png" alt="PII-BR — Detector e anonimizador LGPD" width="600">
 </p>
 
-# pii-br
+# PII-BR
 
 Detecção e mascaramento de dados pessoais (PII) em textos em português do Brasil, pensado para quem precisa anonimizar logs, tickets e documentos sob a LGPD.
 
