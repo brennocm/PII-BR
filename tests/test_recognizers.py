@@ -149,6 +149,9 @@ def test_email_search_is_linear(text: str) -> None:
         ("x@a@example.com", ["a@example.com"]),
         ("joao@@example.com", []),
         ("a" * 70 + "@example.com", []),  # parte local acima do limite da RFC
+        # chave=valor de log: o "=" é válido na RFC, mas a chave não faz parte do e-mail
+        ("email=ana@example.com cep=70040010", ["ana@example.com", "70040010"]),
+        ('to="bia@example.com"', ["bia@example.com"]),
     ],
 )
 def test_email_edges(text: str, emails: list[str]) -> None:

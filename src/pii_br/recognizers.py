@@ -54,8 +54,10 @@ _PHONE_FORMATTED = re.compile(
     + _END
 )
 _CEP_FORMATTED = re.compile(_START + r"(?:\d{5}-\d{3}|\d{2}\.\d{3}-\d{3})" + _END)
+# Parte local da RFC 5322 sem o "=": em `email=ana@example.com` (log, query string) a chave
+# não é parte do endereço. O validador `is_valid_email` continua aceitando o "=".
 _EMAIL = re.compile(
-    r"(?<![\w.+-])[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+)*"
+    r"(?<![\w.+-])[A-Za-z0-9!#$%&'*+/?^_`{|}~-]+(?:\.[A-Za-z0-9!#$%&'*+/?^_`{|}~-]+)*"
     r"@(?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,}(?![\w-])"
 )
 
