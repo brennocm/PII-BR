@@ -43,7 +43,7 @@ Total: **R$ 0**. Nada aqui pede cartão de crédito. O único jeito de gerar cus
 | Token HF "pii-br-publicar" (escrita) | Publicar dataset e card do modelo a partir da sua máquina | huggingface.co → Settings → Access Tokens | Login local: `! uv run hf auth login` (o token fica no cache do HF, fora do repositório) | Passo 4 |
 | `HF_TOKEN` no Kaggle (escrita) | O notebook publica o modelo | Mesmo token acima, ou um próprio | Notebook no Kaggle → Add-ons → Secrets | Passo 5 |
 | `HF_TOKEN` no GitHub (escrita só no Space) | A Action publica o Space | Token fine-grained com escrita apenas no Space `PII-BR` | `! gh secret set HF_TOKEN` (pede o valor sem eco) | Passo 7 |
-| `HF_SPACE` no GitHub (variável, não segredo) | Qual Space publicar | `<usuario>/PII-BR` | `! gh variable set HF_SPACE --body "<usuario>/PII-BR"` | Passo 7 |
+| `HF_SPACE` no GitHub (variável, não segredo) | Qual Space publicar | `brennocm/PII-BR` | `! gh variable set HF_SPACE --body "brennocm/PII-BR"` | Passo 7 |
 
 Regras: nunca cole um token no chat, num commit ou num issue. Um token por finalidade. Se algum vazar, revogue em Settings → Access Tokens antes de qualquer outra coisa.
 
@@ -65,7 +65,7 @@ Regras: nunca cole um token no chat, num commit ou num issue. Um token por final
 4. **Verificar:** `gh run list --limit 1` mostra `ci` com `completed success`.
 5. **Se falhar:** abra o log com `gh run view --log-failed`; o mais provável é versão de ferramenta, e eu ajusto.
 
-6. **CODEOWNERS e Renovate:** com o repositório criado, me diga o seu usuário do GitHub e eu crio o `.github/CODEOWNERS` (revisão obrigatória em `.github/`, `space/` e `src/`). Instale o app do Renovate em github.com/apps/renovate e dê acesso só ao `PII-BR`; ele lê o `renovate.json` e abre PRs semanais com 14 dias de quarentena para versões novas.
+6. **Renovate:** instale o app do Renovate em github.com/apps/renovate e dê acesso só ao `PII-BR`; ele lê o `renovate.json` e abre PRs semanais com 14 dias de quarentena para versões novas.
 
 ### Passo 2 — Hugging Face: conta e token (≈ 10 min)
 
@@ -74,23 +74,15 @@ Regras: nunca cole um token no chat, num commit ou num issue. Um token por final
 3. Login local: `! uv run hf auth login` e cole o token quando ele pedir (não aparece na tela).
 4. **Verificar:** `uv run hf auth whoami` mostra o seu usuário.
 
-### Passo 3 — Trocar `<usuario>` pelos nomes reais (≈ 2 min)
-
-Me diga o seu usuário do Hugging Face e do GitHub e eu troco os placeholders no README e nos cards, ou rode:
-
-```bash
-grep -rl "<usuario>" README.md cards space docs | xargs sed -i "s/<usuario>/SEU_USUARIO/g"
-```
-
 ### Passo 4 — Publicar o dataset (≈ 5 min)
 
 ```bash
 uv run python -m data_gen.generate --out data
-uv run --group hub python -m data_gen.push_dataset --repo SEU_USUARIO/PII-BR \
-  --github https://github.com/SEU_GITHUB/PII-BR
+uv run --group hub python -m data_gen.push_dataset --repo brennocm/PII-BR \
+  --github https://github.com/brennocm/PII-BR
 ```
 
-- **Esperado:** `Publicado: https://huggingface.co/datasets/SEU_USUARIO/PII-BR`, com 5 splits e o card.
+- **Esperado:** `Publicado: https://huggingface.co/datasets/brennocm/PII-BR`, com 5 splits e o card.
 - **Verificar:** a página do dataset mostra o *Dataset Viewer* com `train`, `validation`, `test`, `test_hard` e `test_real`.
 - **Se falhar com 401/403:** o token não é de escrita; gere outro e refaça o login.
 
@@ -100,9 +92,9 @@ uv run --group hub python -m data_gen.push_dataset --repo SEU_USUARIO/PII-BR \
 2. *Create → New Notebook → File → Import Notebook* → envie `training/train.ipynb`.
 3. Painel direito: *Session options → Accelerator: GPU T4 x2* (ou P100) e *Internet on*.
 4. *Add-ons → Secrets → Add secret*: nome `HF_TOKEN`, valor = o token de escrita; marque para este notebook.
-5. Na primeira célula de código, troque `SEU_USUARIO` pelo seu usuário do HF.
+5. A primeira célula de código já usa `HF_USER = "brennocm"`; não precisa mudar.
 6. *Save Version → Save & Run All (Commit)*. Pode fechar a aba.
-7. **Esperado:** em ~30 min a versão termina com `Modelo publicado: https://huggingface.co/SEU_USUARIO/PII-BR`.
+7. **Esperado:** em ~30 min a versão termina com `Modelo publicado: https://huggingface.co/brennocm/PII-BR`.
 8. **Verificar:** a página do modelo tem `model.safetensors` e `metrics_seqeval.json`.
 9. **Se falhar:** abra o log da versão. Erro de `kaggle_secrets` = secret não marcado para o notebook; erro de download = internet desligada; CUDA out of memory = troque `BATCH = 16` por `8`. Se a sessão cair, rode de novo: o notebook retoma do último checkpoint.
 
@@ -110,8 +102,8 @@ uv run --group hub python -m data_gen.push_dataset --repo SEU_USUARIO/PII-BR \
 
 ```bash
 uv sync --all-extras --group baseline --group hub
-uv run python -m training.evaluate --model SEU_USUARIO/PII-BR --data data --write-card
-uv run hf upload SEU_USUARIO/PII-BR outputs/model_card/README.md README.md
+uv run python -m training.evaluate --model brennocm/PII-BR --data data --write-card
+uv run hf upload brennocm/PII-BR outputs/model_card/README.md README.md
 ```
 
 - **Esperado:** tabelas híbrido × só modelo × só regex × Presidio nos três splits, latência e erros no card.
@@ -120,16 +112,16 @@ uv run hf upload SEU_USUARIO/PII-BR outputs/model_card/README.md README.md
 ### Passo 7 — Space (≈ 10 min)
 
 1. huggingface.co → *New Space* → nome `PII-BR`, SDK **Gradio**, hardware **CPU basic (free)**, público.
-2. Token só para o Space: Settings → Access Tokens → *Fine-grained* → em *Repositories permissions*, escolha o Space `SEU_USUARIO/PII-BR` com **Write**. Nome: `pii-br-space-deploy`.
+2. Token só para o Space: Settings → Access Tokens → *Fine-grained* → em *Repositories permissions*, escolha o Space `brennocm/PII-BR` com **Write**. Nome: `pii-br-space-deploy`.
 3. No terminal:
    ```
    ! gh secret set HF_TOKEN
-   ! gh variable set HF_SPACE --body "SEU_USUARIO/PII-BR"
+   ! gh variable set HF_SPACE --body "brennocm/PII-BR"
    ! gh workflow run deploy-space
    ```
 4. **Esperado:** o workflow `deploy-space` termina verde, e o Space fica *Building* e depois *Running* (5 a 10 min no primeiro build, por causa do torch).
 5. **Verificar:** abra o Space, clique nos 6 exemplos e confira:
-   - o status no topo diz `Modelo SEU_USUARIO/PII-BR (int8, CPU)`;
+   - o status no topo diz `Modelo brennocm/PII-BR (int8, CPU)`;
    - o exemplo com CPF inválido mostra o alerta;
    - o exemplo sem PII não marca nada;
    - um texto de ~1.000 caracteres responde em menos de 3 s.

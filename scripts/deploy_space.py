@@ -1,8 +1,8 @@
 """Monta a pasta do Space (app + cópia do pacote pii_br) e publica no Hugging Face.
 
 Uso:
-    uv run --group hub python scripts/deploy_space.py --repo <usuario>/PII-BR --dry-run
-    HF_TOKEN=... uv run --group hub python scripts/deploy_space.py --repo <usuario>/PII-BR
+    uv run --group hub python scripts/deploy_space.py --repo brennocm/PII-BR --dry-run
+    HF_TOKEN=... uv run --group hub python scripts/deploy_space.py --repo brennocm/PII-BR
 
 `--dry-run` só monta a pasta e imprime o caminho (dá para rodar `python app.py` nela).
 """
@@ -34,8 +34,8 @@ def build(target: Path) -> Path:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=(__doc__ or "").split("\n")[0])
-    parser.add_argument("--repo", required=True, help="<usuario>/PII-BR")
-    parser.add_argument("--model", help="repo do modelo, se diferente de <usuario>/PII-BR")
+    parser.add_argument("--repo", required=True, help="brennocm/PII-BR")
+    parser.add_argument("--model", help="repo do modelo, se diferente de brennocm/PII-BR")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
 

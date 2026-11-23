@@ -1,0 +1,6 @@
+# Revisão obrigatória nos caminhos que publicam ou executam código com segredos.
+* @brennocm
+/.github/ @brennocm
+/space/ @brennocm
+/scripts/ @brennocm
+/src/pii_br/ @brennocm

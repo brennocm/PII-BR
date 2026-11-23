@@ -16,10 +16,10 @@ O projeto entrega um detector de dados pessoais (PII) em português do Brasil, p
 
 | Peça | Repositório | Conteúdo |
 | --- | --- | --- |
-| Dataset | `datasets/<usuario>/PII-BR` | Frases sintéticas anotadas em BIO, splits train/val/test/test-hard/test-real, dataset card |
-| Modelo | `<usuario>/PII-BR` | NER fine-tuned, model card com métricas por entidade |
-| Space | `spaces/<usuario>/PII-BR` | App Gradio em CPU gratuita: detecta, destaca e mascara |
-| Código | GitHub `<usuario>/PII-BR` | Gerador, treino, avaliação, app e validadores, com testes |
+| Dataset | `datasets/brennocm/PII-BR` | Frases sintéticas anotadas em BIO, splits train/val/test/test-hard/test-real, dataset card |
+| Modelo | `brennocm/PII-BR` | NER fine-tuned, model card com métricas por entidade |
+| Space | `spaces/brennocm/PII-BR` | App Gradio em CPU gratuita: detecta, destaca e mascara |
+| Código | GitHub `brennocm/PII-BR` | Gerador, treino, avaliação, app e validadores, com testes |
 
 ## Viabilidade no hardware atual
 

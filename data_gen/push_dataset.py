@@ -1,8 +1,8 @@
 """Monta o DatasetDict a partir de `data/` e publica no Hugging Face Hub com o card.
 
 Uso:
-    uv run --group hub python -m data_gen.push_dataset --repo <usuario>/PII-BR --dry-run
-    HF_TOKEN=... uv run --group hub python -m data_gen.push_dataset --repo <usuario>/PII-BR
+    uv run --group hub python -m data_gen.push_dataset --repo brennocm/PII-BR --dry-run
+    HF_TOKEN=... uv run --group hub python -m data_gen.push_dataset --repo brennocm/PII-BR
 
 `--dry-run` monta tudo e grava o card em `data/README.md`, sem publicar. O token vem da
 variável HF_TOKEN ou do login do `hf auth login`; nunca é passado na linha de comando.
@@ -93,9 +93,9 @@ def render_card(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=(__doc__ or "").split("\n")[0])
-    parser.add_argument("--repo", required=True, help="<usuario>/PII-BR")
+    parser.add_argument("--repo", required=True, help="brennocm/PII-BR")
     parser.add_argument("--data", type=Path, default=Path("data"))
-    parser.add_argument("--github", default="https://github.com/<usuario>/PII-BR")
+    parser.add_argument("--github", default="https://github.com/brennocm/PII-BR")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
 

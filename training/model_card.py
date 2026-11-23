@@ -40,7 +40,7 @@ def _seqeval_section(model: str) -> str:
 
 def write_card(results: dict[str, Any], report: str, errors: str, errors_key: str) -> Path:
     model = str(results["model"])
-    user = os.environ.get("HF_USER") or (model.split("/")[0] if "/" in model else "<usuario>")
+    user = os.environ.get("HF_USER") or (model.split("/")[0] if "/" in model else "brennocm")
     repo = f"{user}/PII-BR"
     lat = results.get("latency", {})
     values = {

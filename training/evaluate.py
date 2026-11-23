@@ -2,7 +2,7 @@
 
 Uso:
     uv run --all-extras --group baseline python -m training.evaluate \\
-        --model <usuario>/PII-BR --data data --out outputs/eval [--write-card]
+        --model brennocm/PII-BR --data data --out outputs/eval [--write-card]
 
 Métricas por span em caracteres, comparando com os `spans` de referência:
 - exato: mesmo início, fim e rótulo;

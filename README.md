@@ -13,9 +13,9 @@ Ferramentas como o Presidio vão bem em inglês, mas não têm reconhecedores pa
 
 | Peça | Onde |
 | --- | --- |
-| Demo (Space) | `huggingface.co/spaces/<usuario>/PII-BR` |
-| Modelo | `huggingface.co/<usuario>/PII-BR` |
-| Dataset | `huggingface.co/datasets/<usuario>/PII-BR` |
+| Demo (Space) | `huggingface.co/spaces/brennocm/PII-BR` |
+| Modelo | `huggingface.co/brennocm/PII-BR` |
+| Dataset | `huggingface.co/datasets/brennocm/PII-BR` |
 | Código | este repositório |
 
 ## Entidades
@@ -37,14 +37,14 @@ Documento com formato certo e dígito errado vira alerta de "possível documento
 ## Uso
 
 ```bash
-pip install "pii-br[model] @ git+https://github.com/<usuario>/PII-BR"
+pip install "pii-br[model] @ git+https://github.com/brennocm/PII-BR"
 ```
 
 ```python
 from pii_br import Detector, Masker
 from pii_br.model import NerModel
 
-detector = Detector(NerModel("<usuario>/PII-BR"))  # sem modelo, Detector() usa só as regras
+detector = Detector(NerModel("brennocm/PII-BR"))  # sem modelo, Detector() usa só as regras
 texto = "Sou Ana Lima, CPF 123.456.789-09, whats (11) 98765-4321."
 spans = detector.detect(texto)
 

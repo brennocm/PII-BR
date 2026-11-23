@@ -22,4 +22,4 @@ O pipeline combina um modelo NER (BERTimbau fine-tuned, quantizado em int8 para 
 
 O Space gratuito dorme depois de 48 h sem acesso; a primeira visita pode levar cerca de 1 minuto para acordar.
 
-Código, dataset e modelo: veja os links na página do projeto no GitHub (PII-BR).
+[Código](https://github.com/brennocm/PII-BR) · [modelo](https://huggingface.co/brennocm/PII-BR) · [dataset](https://huggingface.co/datasets/brennocm/PII-BR)
