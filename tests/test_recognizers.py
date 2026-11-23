@@ -1,3 +1,5 @@
+import time
+
 import pytest
 
 from pii_br import Entity, recognize
@@ -128,3 +130,26 @@ def test_entity_filter() -> None:
 def test_multiline_and_noise() -> None:
     text = "oi!! 😊\nmeu cpf eh 123 456 789 09\nzap (11)98765-4321"
     assert [s.label for s in recognize(text)] == [Entity.CPF, Entity.TELEFONE]
+
+
+@pytest.mark.parametrize(
+    "text", ["1/" * 20_000, "1.2-3/" * 8_000, "@" * 40_000, ("a" * 60 + "@") * 600]
+)
+def test_email_search_is_linear(text: str) -> None:
+    started = time.perf_counter()
+    recognize(text)
+    assert time.perf_counter() - started < 2  # antes: 28 s para "1/" * 20_000
+
+
+@pytest.mark.parametrize(
+    ("text", "emails"),
+    [
+        ("a@example.com, b.c+d@sub.example.com.br.", ["a@example.com", "b.c+d@sub.example.com.br"]),
+        ("ana@example.com;bia@example.com", ["ana@example.com", "bia@example.com"]),
+        ("x@a@example.com", ["a@example.com"]),
+        ("joao@@example.com", []),
+        ("a" * 70 + "@example.com", []),  # parte local acima do limite da RFC
+    ],
+)
+def test_email_edges(text: str, emails: list[str]) -> None:
+    assert [s.text for s in recognize(text)] == emails

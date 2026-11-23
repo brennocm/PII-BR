@@ -59,6 +59,9 @@ _EMAIL = re.compile(
     r"@(?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,}(?![\w-])"
 )
 
+_EMAIL_LOCAL_MAX = 64  # RFC 5321
+_EMAIL_DOMAIN_MAX = 255
+
 _CONTEXT_WORDS: dict[Entity, re.Pattern[str]] = {
     Entity.CPF: re.compile(r"\bc\.?p\.?f\b"),
     Entity.CNPJ: re.compile(r"\bcnpj\b"),
@@ -97,8 +100,20 @@ def recognize(text: str, entities: Iterable[Entity] | None = None) -> list[Span]
 
 
 def _find_email(text: str) -> Iterator[Span]:
-    for m in _EMAIL.finditer(text):
-        if v.is_valid_email(m[0]):
+    # A regex só roda numa janela em volta de cada "@". Rodada no texto inteiro, ela tenta
+    # de novo a partir de cada posição e fica quadrática em textos sem "@" (ReDoS).
+    # `pos` não corta o texto, então o lookbehind ainda enxerga o que vem antes da janela.
+    last_end = 0
+    for at in re.finditer("@", text):
+        if at.start() < last_end:
+            continue  # "@" dentro de um e-mail já encontrado
+        lo = max(last_end, at.start() - _EMAIL_LOCAL_MAX - 1)
+        hi = min(len(text), at.end() + _EMAIL_DOMAIN_MAX)
+        m = _EMAIL.search(text, lo, hi)
+        while m is not None and m.end() <= at.start():
+            m = _EMAIL.search(text, m.end(), hi)
+        if m is not None and m.start() <= at.start() and v.is_valid_email(m[0]):
+            last_end = m.end()
             yield _span(m, Entity.EMAIL, SCORE_VALID, valid=True)
 
 
