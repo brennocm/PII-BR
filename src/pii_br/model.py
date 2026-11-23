@@ -2,7 +2,8 @@
 
 O texto inteiro passa pelo pipeline do `transformers` em janelas de 256 tokens com
 sobreposição de 64 (`stride`), então textos longos não são truncados. Por padrão o modelo é
-quantizado em int8 dinâmico, que em CPU corta a latência para cerca de 1/3 (ver SPEC.md).
+quantizado em int8 dinâmico, que em CPU corta a latência para menos da metade (ver SPEC.md),
+exceto a saída do FFN, que perde a precisão em int8 (ver `quantizable`).
 """
 
 # torch e transformers não têm tipos completos; as regras de "Unknown" do pyright estrito
@@ -12,6 +13,7 @@ quantizado em int8 dinâmico, que em CPU corta a latência para cerca de 1/3 (ve
 
 from __future__ import annotations
 
+import re
 import warnings
 from typing import TYPE_CHECKING, Any, cast
 
@@ -20,10 +22,20 @@ from pii_br.types import Entity, Span
 if TYPE_CHECKING:
     from transformers import Pipeline
 
-__all__ = ["NerModel"]
+__all__ = ["NerModel", "quantizable"]
 
 WINDOW = 256
 STRIDE = 64
+
+# Saída do FFN de cada camada (`encoder.layer.N.output.dense`). A entrada dela é a ativação do
+# GELU (3.072 dimensões) com outliers; o int8 dinâmico usa uma escala por tensor e destrói a
+# precisão: no modelo publicado, nomes somem e o CPF sai partido com score 0,2. Fica em fp32.
+_FFN_OUT = re.compile(r"\.layer\.\d+\.output\.dense$")
+
+
+def quantizable(name: str) -> bool:
+    """Se a camada `Linear` chamada `name` pode ir para int8 dinâmico (ver `_FFN_OUT`)."""
+    return _FFN_OUT.search(name) is None
 
 
 class NerModel:
@@ -38,6 +50,7 @@ class NerModel:
         revision: str | None = None,
     ) -> None:
         import torch
+        from torch.ao.quantization.qconfig import default_dynamic_qconfig
         from transformers import AutoModelForTokenClassification, AutoTokenizer, pipeline
 
         if threads:
@@ -49,11 +62,14 @@ class NerModel:
         if quantize:
             # A API eager de quantização está depreciada no torch, mas segue funcional e é a mais
             # simples para CPU; o aviso é silenciado para não poluir o log do Space.
+            layers = {
+                name: default_dynamic_qconfig
+                for name, module in model.named_modules()
+                if isinstance(module, torch.nn.Linear) and quantizable(name)
+            }
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
-                model = torch.ao.quantization.quantize_dynamic(
-                    model, {torch.nn.Linear}, dtype=torch.qint8
-                )
+                model = torch.ao.quantization.quantize_dynamic(model, layers)
         self.model_id = model_id
         self._pipe: Pipeline = pipeline(
             "token-classification",

@@ -59,6 +59,7 @@ Stack: Python 3.11 + uv — ver `docs/adr/0001-stack.md`. Deploy: Hugging Face H
 - `merge` nunca descobre um caractere que algum span cobria (teste de propriedade em `test_merge_masking.py`); o modelo só substitui um span da regex que cobre por inteiro.
 - Regex sobre texto do usuário tem que ser linear: o e-mail roda só numa janela em volta de cada `@`. Há teste de tempo em `test_recognizers.py`.
 - `space/requirements.txt` e o `pip install` do notebook fixam as mesmas versões do `uv.lock` (`tests/test_pins.py`); atualize junto.
+- int8 dinâmico na saída do FFN (`layer.N.output.dense`) destrói o modelo (recall cai pela metade, scores ~0,3). `quantizable` em `model.py` deixa essas camadas em fp32; ao mudar a quantização, compare com `quantize=False` num split.
 - No Space, `gr.State` copia o valor inicial: o `Masker` (com o sal) é criado na primeira requisição de cada sessão, nunca no import.
 
 ## Pronto significa

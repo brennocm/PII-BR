@@ -4,7 +4,7 @@ from typing import Any
 import pytest
 
 from pii_br import Detector, Entity
-from pii_br.model import NerModel
+from pii_br.model import NerModel, quantizable
 from pii_br.words import words
 
 LOCAL_MODEL = Path(__file__).parents[1] / "outputs" / "mini"
@@ -60,6 +60,15 @@ def test_local_model_end_to_end() -> None:
     assert len(text) > 1000  # passa da janela de 256 tokens
     assert sum(s.label is Entity.CPF for s in spans) == 20
     assert all(text[s.start : s.end] == s.text for s in spans)
+
+
+def test_ffn_output_stays_fp32() -> None:
+    # int8 nessas camadas zerou o recall do modelo publicado; o resto pode ser quantizado.
+    assert not quantizable("bert.encoder.layer.11.output.dense")
+    assert quantizable("bert.encoder.layer.11.attention.output.dense")
+    assert quantizable("bert.encoder.layer.0.attention.self.query")
+    assert quantizable("bert.encoder.layer.0.intermediate.dense")
+    assert quantizable("classifier")
 
 
 def test_words_helper() -> None:
