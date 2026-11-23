@@ -34,6 +34,17 @@ def test_predict_trims_filters_and_joins() -> None:
     assert spans[0].score == 0.8  # junção fica com o menor score
 
 
+def test_comma_joins_address_but_not_names() -> None:
+    text = "Ana, Bruno; Rua A, 12"
+    raw = [
+        {"entity_group": "NOME", "start": 0, "end": 3, "score": 0.9},
+        {"entity_group": "NOME", "start": 5, "end": 10, "score": 0.9},
+        {"entity_group": "ENDERECO", "start": 12, "end": 17, "score": 0.9},
+        {"entity_group": "ENDERECO", "start": 19, "end": 21, "score": 0.9},
+    ]
+    assert [s.text for s in fake_model(raw).predict(text)] == ["Ana", "Bruno", "Rua A, 12"]
+
+
 def test_predict_empty_text() -> None:
     assert (
         fake_model([{"entity_group": "NOME", "start": 0, "end": 1, "score": 1}]).predict("  ") == []
