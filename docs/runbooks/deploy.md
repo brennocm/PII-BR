@@ -121,7 +121,7 @@ O Space é **estático** (ADR 0003): o Hugging Face passou a cobrar por Spaces G
    ```
 3. **Esperado:** o workflow `deploy-space` termina verde em ~1 min (não há build no Space estático).
 4. **Verificar:** abra o Space e confira:
-   - o status diz "Modelo e regras prontos" depois do download (~15 s na primeira visita, depois do cache);
+   - o status diz "Modelo e regras prontos" depois do download (194 MB: de ~15 s numa conexão rápida a vários minutos numa lenta, só na primeira visita; depois vem do cache);
    - o exemplo com CPF inválido mostra o alerta;
    - o exemplo sem PII não marca nada;
    - um texto de ~1.000 caracteres responde em menos de 3 s.
