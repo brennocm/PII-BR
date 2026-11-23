@@ -22,7 +22,7 @@ ALL = ["NOME", "CPF", "CNPJ", "RG", "TELEFONE", "EMAIL", "ENDERECO", "CEP", "DAT
 @pytest.fixture(scope="module")
 def app(monkeypatch_module: pytest.MonkeyPatch) -> ModuleType:
     monkeypatch_module.setenv("PII_BR_MODEL", "")
-    monkeypatch_module.syspath_prepend(str(ROOT / "space"))
+    monkeypatch_module.syspath_prepend(str(ROOT / "app"))
     sys.modules.pop("app", None)
     return importlib.import_module("app")
 

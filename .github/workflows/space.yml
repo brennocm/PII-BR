@@ -24,6 +24,7 @@ jobs:
     env:
       HF_TOKEN: ${{ secrets.HF_TOKEN }}
       HF_SPACE: ${{ vars.HF_SPACE }}
+      PII_BR_MODEL_REVISION: ${{ vars.PII_BR_MODEL_REVISION }}
     steps:
       - name: Sem configuração, não publica
         if: env.HF_TOKEN == '' || env.HF_SPACE == ''

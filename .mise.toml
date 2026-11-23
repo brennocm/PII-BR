@@ -27,8 +27,15 @@ run = [
 ]
 
 [tasks.dev]
-description = "Sobe o app do Space em http://127.0.0.1:7860 (PII_BR_MODEL=<repo|pasta> para usar um modelo)"
-run = "uv run --all-extras --group space python space/app.py"
+description = "Sobe o app Gradio local em http://127.0.0.1:7860 (PII_BR_MODEL=<repo|pasta> para usar um modelo)"
+run = "uv run --all-extras --group space python app/app.py"
+
+[tasks.web]
+description = "Monta a demo estática do Space e serve em http://127.0.0.1:8000"
+run = [
+  "uv run python scripts/deploy_space.py --repo local/PII-BR --out outputs/space --dry-run",
+  "uv run python -m http.server 8000 --bind 127.0.0.1 -d outputs/space",
+]
 
 [tasks.setup]
 description = "Instala dependências e os hooks de pre-commit"

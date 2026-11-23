@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PII-BR: detector de dados pessoais</title>
+<meta name="description" content="Encontra e mascara dados pessoais em textos em português do Brasil, direto no navegador.">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#f7f8f9" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#15181c" media="(prefers-color-scheme: dark)">
+<meta name="referrer" content="no-referrer">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js"
+        integrity="sha384-90so5tCKvl0xs9agU29IMKlAVzhfzFX7QO//YxQkRhJG58bBZrFN+2ZTRB026X5X"
+        crossorigin="anonymous" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/ort.wasm.min.js"
+        integrity="sha384-epp8GDQUoLKx5qHa6SoDHKv7fSHILsEYk4uEsHdPRBztXEIVWCe/lhhrQJUBMZcf"
+        crossorigin="anonymous" defer></script>
+<script src="app.js" defer></script>
+</head>
+<body>
+<header class="masthead">
+  <h1>PII-BR</h1>
+  <p class="lede">Encontra e mascara dados pessoais em textos em português do Brasil: nome, CPF,
+    CNPJ (inclusive o alfanumérico), RG, telefone, e-mail, endereço, CEP e data de nascimento.
+    Um modelo treinado em português trabalha junto com regras que conferem dígito verificador.</p>
+  <p class="local"><strong>O texto não sai do seu navegador.</strong> O modelo e as regras rodam
+    nesta página; nada do que você cola é enviado a servidor nenhum.</p>
+</header>
+
+<main class="workbench">
+  <section class="compose" aria-labelledby="input-title">
+    <h2 id="input-title" class="visually-hidden">Texto</h2>
+    <label for="text" class="field-label">Texto</label>
+    <textarea id="text" rows="10" spellcheck="false"
+              placeholder="Cole aqui um texto com dados pessoais…"></textarea>
+    <div class="actions">
+      <button id="run" type="button" class="primary" disabled>Mascarar texto</button>
+      <span class="hint">Ctrl + Enter</span>
+    </div>
+  </section>
+
+  <section class="output" aria-labelledby="output-title" aria-live="polite">
+    <h2 id="output-title" class="visually-hidden">Resultado</h2>
+    <p id="status" class="status">Carregando o Python no navegador…</p>
+    <div id="model-progress" class="progress" hidden>
+      <progress id="model-bar" max="1" value="0"></progress>
+      <span id="model-label"></span>
+    </div>
+
+    <p id="summary" class="summary"></p>
+
+    <div class="pane">
+      <div class="pane-head">
+        <span class="field-label">Texto mascarado</span>
+        <button id="copy" type="button" class="quiet" disabled>Copiar</button>
+      </div>
+      <pre id="masked" class="masked" tabindex="0"></pre>
+    </div>
+
+    <div class="pane">
+      <div class="pane-head">
+        <span class="field-label">Dados encontrados</span>
+      </div>
+      <div id="highlight" class="highlight"></div>
+      <ul id="legend" class="legend"></ul>
+    </div>
+
+    <details class="spans">
+      <summary>Spans encontrados</summary>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Entidade</th><th>Trecho</th><th>Fonte</th><th>Confiança</th><th>Documento</th></tr></thead>
+          <tbody id="span-rows"></tbody>
+        </table>
+      </div>
+    </details>
+  </section>
+  <section class="settings" aria-label="Exemplos e opções">
+    <details class="examples" open>
+      <summary>Exemplos</summary>
+      <ul id="examples"></ul>
+    </details>
+
+    <fieldset class="options">
+      <legend>Estratégia</legend>
+      <label><input type="radio" name="strategy" value="redact" checked> Redação: <code>[CPF]</code></label>
+      <label><input type="radio" name="strategy" value="partial"> Máscara parcial: <code>***.456.789-**</code></label>
+      <label><input type="radio" name="strategy" value="pseudonym"> Pseudônimo consistente: <code>&lt;CPF_1&gt;</code></label>
+      <label><input type="radio" name="strategy" value="synthetic"> Dado sintético válido</label>
+    </fieldset>
+
+    <fieldset class="options">
+      <legend>Entidades</legend>
+      <div id="entities" class="entity-grid"></div>
+    </fieldset>
+
+    <div class="threshold">
+      <label for="threshold">Confiança mínima do modelo</label>
+      <input id="threshold" type="range" min="0.1" max="0.95" step="0.05" value="0.5">
+      <output id="threshold-value" for="threshold">0,50</output>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footnote">
+  <p>A ferramenta reduz risco, mas não certifica anonimização: pela LGPD (art. 12), mascarar
+    entidades não remove quasi-identificadores como cargo, bairro ou datas. Use exemplos ou dados
+    inventados.</p>
+  <p><a href="https://github.com/brennocm/PII-BR">Código</a>
+    <a href="https://huggingface.co/brennocm/PII-BR">Modelo</a>
+    <a href="https://huggingface.co/datasets/brennocm/PII-BR">Dataset</a></p>
+</footer>
+</body>
+</html>

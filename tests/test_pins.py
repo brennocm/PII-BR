@@ -23,7 +23,7 @@ def pins(lines: list[str]) -> dict[str, str]:
 
 
 def test_space_requirements_match_lock() -> None:
-    lines = (ROOT / "space" / "requirements.txt").read_text(encoding="utf-8").splitlines()
+    lines = (ROOT / "app" / "requirements.txt").read_text(encoding="utf-8").splitlines()
     space = pins(lines)
     assert set(space) == {"torch", "transformers", "gradio"}
     lock = locked()
@@ -39,6 +39,6 @@ def test_notebook_pins_match_lock(name: str) -> None:
 
 
 def test_space_readme_sdk_version_matches_lock() -> None:
-    readme = (ROOT / "space" / "README.md").read_text(encoding="utf-8")
+    readme = (ROOT / "app" / "README.md").read_text(encoding="utf-8")
     m = re.search(r"^sdk_version: (\S+)$", readme, re.MULTILINE)
     assert m is not None and m[1] == locked()["gradio"]
