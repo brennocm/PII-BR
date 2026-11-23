@@ -8,6 +8,10 @@ requires-python = ">=3.11"
 # O núcleo (validadores, recognizers, fusão, mascaramento) só usa a biblioteca padrão.
 dependencies = []
 
+[project.optional-dependencies]
+# Modelo NER (pii_br.model). O núcleo funciona sem ele, só com regex + validação.
+model = ["torch>=2.4", "transformers>=5.0,<6"]
+
 [build-system]
 requires = ["uv_build>=0.9,<0.14"]
 build-backend = "uv_build"
@@ -29,8 +33,12 @@ dev = [
     "types-pyyaml>=6.0.12.20261113",
 ]
 hub = ["datasets", "huggingface-hub"]
+train = ["torch", "transformers", "accelerate", "datasets", "seqeval", "nbconvert", "ipykernel"]
+baseline = ["presidio-analyzer", "spacy"]
+space = ["gradio"]
 
 [tool.uv]
+default-groups = ["dev"]
 # Supply chain: não resolver versões publicadas há menos de alguns dias; atualizar de propósito.
 exclude-newer = "2026-11-16T00:00:00Z"
 
@@ -46,6 +54,8 @@ select = ["E", "F", "I", "B", "UP", "S", "SIM", "RUF", "ANN"]
 "data_gen/**" = ["S311"]
 # random.Random gera dados sintéticos reprodutíveis por seed, não segredos.
 "src/pii_br/validators.py" = ["S311"]
+# O rng do mascaramento sintético gera valores falsos; o segredo (sal do HMAC) usa `secrets`.
+"src/pii_br/masking.py" = ["S311"]
 
 [tool.pyright]
 include = ["src", "tests", "data_gen"]
@@ -85,3 +95,12 @@ show_missing = true
 
 [tool.deptry.per_rule_ignores]
 DEP002 = ["ruff", "pyright", "pytest", "pytest-xdist", "coverage", "deptry", "vulture", "pip-audit"]
+
+# Torch só para CPU localmente (no Kaggle/Colab o notebook usa o torch com CUDA da plataforma).
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }
