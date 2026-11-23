@@ -192,16 +192,23 @@ def presidio_system() -> System:
     return run
 
 
-def model_systems(model_id: str, threshold: float) -> tuple[System, System, Detector]:
+def model_systems(model_id: str, threshold: float) -> tuple[dict[str, System], Detector]:
+    """Modelo isolado em fp32 e em int8 (a diferença é a perda da quantização, que o Space
+    usa) e o pipeline híbrido com o int8."""
     from pii_br.model import NerModel
 
-    model = NerModel(model_id, quantize=True)
+    def only(model: NerModel) -> System:
+        return lambda text: as_gold([s for s in model.predict(text) if s.score >= threshold])
 
-    def model_only(text: str) -> list[Gold]:
-        return as_gold([s for s in model.predict(text) if s.score >= threshold])
-
-    detector = Detector(model, threshold=threshold)
-    return model_only, lambda text: as_gold(detector.detect(text)), detector
+    fp32 = NerModel(model_id, quantize=False)
+    int8 = NerModel(model_id, quantize=True)
+    detector = Detector(int8, threshold=threshold)
+    systems: dict[str, System] = {
+        "só modelo (fp32)": only(fp32),
+        "só modelo": only(int8),
+        "híbrido": lambda text: as_gold(detector.detect(text)),
+    }
+    return systems, detector
 
 
 def latency(detector: Detector, runs: int = 10) -> dict[str, float]:
@@ -297,9 +304,8 @@ def main() -> None:
         systems["Presidio (padrão, pt)"] = presidio_system()
     detector = None
     if args.model:
-        model_only, hybrid, detector = model_systems(args.model, args.threshold)
-        systems["só modelo"] = model_only
-        systems["híbrido"] = hybrid
+        models, detector = model_systems(args.model, args.threshold)
+        systems |= models
 
     results: dict[str, Any] = {
         "model": args.model,

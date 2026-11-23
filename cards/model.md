@@ -67,7 +67,7 @@ Métricas por span em caracteres. **Sobreposição** conta acerto quando o rótu
 
 {{RESULTS}}
 
-Baselines: **só regex** é a parte determinística do pacote, sem modelo; **Presidio** usa os recognizers padrão do `presidio-analyzer` registrados para português, com spaCy `pt_core_news_lg` (`PERSON`→`NOME`, `LOCATION`→`ENDERECO`, `PHONE_NUMBER`→`TELEFONE`, `EMAIL_ADDRESS`→`EMAIL`). O Presidio não tem recognizers para CPF, CNPJ, RG ou CEP, então essas entidades contam como não detectadas.
+Baselines: **só regex** é a parte determinística do pacote, sem modelo; **Presidio** usa os recognizers padrão do `presidio-analyzer` registrados para português, com spaCy `pt_core_news_lg` (`PERSON`→`NOME`, `LOCATION`→`ENDERECO`, `PHONE_NUMBER`→`TELEFONE`, `EMAIL_ADDRESS`→`EMAIL`). O Presidio não tem recognizers para CPF, CNPJ, RG ou CEP, então essas entidades contam como não detectadas. **Só modelo** é o modelo quantizado em int8 dinâmico, como roda no Space e no `NerModel`; **só modelo (fp32)** é o mesmo modelo sem quantização, e a diferença entre os dois é a perda do int8.
 
 {{SEQEVAL}}
 
