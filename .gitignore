@@ -1,0 +1,62 @@
+# Segredos
+.env
+.env.*
+!env.example
+*.pem
+*.key
+*.p12
+credentials.json
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+coverage/
+htmlcov/
+
+# Dados e modelos gerados (publicados no Hugging Face, não no git)
+data/
+outputs/
+checkpoints/
+*.parquet
+*.arrow
+*.safetensors
+*.bin
+*.onnx
+
+# Gradio
+.gradio/
+flagged/
+
+# Notebooks: checkpoints locais
+.ipynb_checkpoints/
+
+# Logs e bancos locais
+*.log
+*.sqlite
+*.db
+
+# Editor e sistema
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.local.*
+
+# Agentes e rascunhos
+CLAUDE.md
+.claude/
+.cursor/
+.aider*
+notes/
+Spec — *.md
+
+# Arte-fonte em alta resolução (a versão otimizada é docs/assets/logo.png)
+docs/assets/logo-original.*

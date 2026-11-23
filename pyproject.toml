@@ -1,0 +1,72 @@
+[project]
+name = "pii-br"
+version = "0.1.0"
+description = "Detecção e mascaramento de dados pessoais (PII) em português do Brasil para a LGPD"
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.11"
+# O núcleo (validadores, recognizers, fusão, mascaramento) só usa a biblioteca padrão.
+dependencies = []
+
+[build-system]
+requires = ["uv_build>=0.9,<0.14"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "ruff",
+    "pyright",
+    "pytest",
+    "pytest-xdist",
+    "coverage",
+    "deptry",
+    "vulture",
+    "pip-audit",
+    # Oráculos independentes para os validadores (não usados pelo pacote)
+    "validate-docbr",
+    "faker",
+]
+
+[tool.uv]
+# Supply chain: não resolver versões publicadas há menos de alguns dias; atualizar de propósito.
+exclude-newer = "2026-11-16T00:00:00Z"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "S", "SIM", "RUF", "ANN"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "S311", "ANN"]
+# random.Random gera dados sintéticos reprodutíveis por seed, não segredos.
+"src/pii_br/validators.py" = ["S311"]
+
+[tool.pyright]
+include = ["src", "tests"]
+typeCheckingMode = "strict"
+pythonVersion = "3.11"
+
+[[tool.pyright.executionEnvironments]]
+# validate_docbr e faker não têm stubs de tipo; os testes os usam só como oráculo.
+root = "tests"
+reportMissingTypeStubs = false
+reportUnknownMemberType = false
+reportUnknownVariableType = false
+reportUnknownArgumentType = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--strict-markers"
+
+[tool.coverage.run]
+source = ["pii_br"]
+branch = true
+
+[tool.coverage.report]
+fail_under = 90
+show_missing = true
+
+[tool.deptry.per_rule_ignores]
+DEP002 = ["ruff", "pyright", "pytest", "pytest-xdist", "coverage", "deptry", "vulture", "pip-audit"]
