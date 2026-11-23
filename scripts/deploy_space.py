@@ -9,8 +9,9 @@ O Space é do tipo `static` (grátis): o navegador roda o pacote no Pyodide e o 
 no `onnxruntime-web`. `--dry-run` só monta a pasta e imprime o caminho; para ver a página,
 sirva a pasta com `python -m http.server -d <pasta>` (ou `mise run web`).
 
-O modelo vem de `--model` na revisão `--model-revision` (ou `PII_BR_MODEL_REVISION`); fixar
-um commit impede que um push no repositório do modelo mude o que a demo roda.
+O modelo vem de `--model` no commit `MODEL_REVISION` (ou `--model-revision` /
+`PII_BR_MODEL_REVISION`): fixar um commit impede que um push no repositório do modelo
+mude o que a demo roda.
 """
 
 from __future__ import annotations
@@ -27,6 +28,8 @@ ROOT = Path(__file__).parents[1]
 SPACE_FILES = ("index.html", "style.css", "app.js", "README.md")
 # Arquivos do Space Gradio antigo que o deploy estático remove do repositório do Space.
 STALE = ["app.py", "requirements.txt", "pii_br/**"]
+# Commit do repositório do modelo com `onnx/model_int8.onnx`; troque ao publicar um modelo novo.
+MODEL_REVISION = "65df4ddcfb770f61551e16272d522c66aa4188d9"
 
 
 def build(target: Path, model: str, revision: str) -> Path:
@@ -49,8 +52,8 @@ def main() -> None:
     parser.add_argument("--model", default="brennocm/PII-BR", help="repositório do modelo")
     parser.add_argument(
         "--model-revision",
-        default=os.environ.get("PII_BR_MODEL_REVISION") or "main",
-        help="commit do modelo (padrão: PII_BR_MODEL_REVISION ou main)",
+        default=os.environ.get("PII_BR_MODEL_REVISION") or MODEL_REVISION,
+        help="commit do modelo (padrão: PII_BR_MODEL_REVISION ou MODEL_REVISION)",
     )
     parser.add_argument("--out", type=Path, help="pasta de saída (padrão: temporária)")
     parser.add_argument("--dry-run", action="store_true")
