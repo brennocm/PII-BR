@@ -1,9 +1,10 @@
-"""Modelo NER (BERTimbau fine-tuned) como fonte de spans. Requer o extra `pii-br[model]`.
+"""Modelo NER (BERTimbau fine-tuned) em PyTorch como fonte de spans. Requer `pii-br[model]`.
 
-O texto inteiro passa pelo pipeline do `transformers` em janelas de 256 tokens com
-sobreposição de 64 (`stride`), então textos longos não são truncados. Por padrão o modelo é
-quantizado em int8 dinâmico, que em CPU corta a latência para menos da metade (ver SPEC.md),
-exceto a saída do FFN, que perde a precisão em int8 (ver `quantizable`).
+Tokenização, janelas de 256 tokens com sobreposição de 64 e decodificação vêm de
+`pii_br.ner`, os mesmos da versão ONNX (`onnx_model.py`) e da demo no navegador; aqui só a
+inferência é em torch. Por padrão o modelo é quantizado em int8 dinâmico, que em CPU corta a
+latência para menos da metade (ver SPEC.md), exceto a saída do FFN, que perde a precisão em
+int8 (ver `quantizable`).
 """
 
 # torch e transformers não têm tipos completos; as regras de "Unknown" do pyright estrito
@@ -15,17 +16,12 @@ from __future__ import annotations
 
 import re
 import warnings
-from typing import TYPE_CHECKING, Any, cast
+from typing import Any
 
-from pii_br.types import Entity, Span
-
-if TYPE_CHECKING:
-    from transformers import Pipeline
+from pii_br.ner import WordPiece, predict
+from pii_br.types import Span
 
 __all__ = ["NerModel", "quantizable"]
-
-WINDOW = 256
-STRIDE = 64
 
 # Saída do FFN de cada camada (`encoder.layer.N.output.dense`). A entrada dela é a ativação do
 # GELU (3.072 dimensões) com outliers; o int8 dinâmico usa uma escala por tensor e destrói a
@@ -51,12 +47,12 @@ class NerModel:
     ) -> None:
         import torch
         from torch.ao.quantization.qconfig import default_dynamic_qconfig
-        from transformers import AutoModelForTokenClassification, AutoTokenizer, pipeline
+        from transformers import AutoModelForTokenClassification, AutoTokenizer
 
         if threads:
             torch.set_num_threads(threads)
-        tokenizer = AutoTokenizer.from_pretrained(model_id, revision=revision)
-        tokenizer.model_max_length = WINDOW
+        fast = AutoTokenizer.from_pretrained(model_id, revision=revision)
+        self.tokenizer = WordPiece.from_tokenizer_json(fast.backend_tokenizer.to_str())
         model = AutoModelForTokenClassification.from_pretrained(model_id, revision=revision)
         model.eval()
         if quantize:
@@ -71,57 +67,17 @@ class NerModel:
                 warnings.simplefilter("ignore")
                 model = torch.ao.quantization.quantize_dynamic(model, layers)
         self.model_id = model_id
-        self._pipe: Pipeline = pipeline(
-            "token-classification",
-            model=model,
-            tokenizer=tokenizer,
-            aggregation_strategy="first",
-            stride=STRIDE,
-            device=-1,
-        )
+        self._model: Any = model
+
+    def logits(self, ids: list[int]) -> list[list[float]]:
+        import torch
+
+        with torch.inference_mode():
+            t = torch.tensor([ids])
+            out = self._model(
+                input_ids=t, attention_mask=torch.ones_like(t), token_type_ids=torch.zeros_like(t)
+            )
+        return out.logits[0].tolist()
 
     def predict(self, text: str) -> list[Span]:
-        if not text.strip():
-            return []
-        raw = cast(list[dict[str, Any]], self._pipe(text))
-        spans: list[Span] = []
-        for item in raw:
-            label = str(item["entity_group"])
-            if label not in Entity.__members__:
-                continue
-            start, end = int(item["start"]), int(item["end"])
-            while start < end and text[start].isspace():
-                start += 1
-            while end > start and text[end - 1].isspace():
-                end -= 1
-            if start < end:
-                spans.append(
-                    Span(start, end, Entity(label), text[start:end], "modelo", float(item["score"]))
-                )
-        return _join_adjacent(spans, text)
-
-
-def _joinable(label: Entity, gap: str) -> bool:
-    """Pedaços vizinhos do mesmo rótulo que o pipeline às vezes separa. Vírgula só une
-    endereço ("Rua A, 12"): entre nomes ("Ana, Bruno") ela separa duas pessoas."""
-    if len(gap) > 2:
-        return False
-    allowed = " ,-" if label is Entity.ENDERECO else " -"
-    return not gap.strip(allowed)
-
-
-def _join_adjacent(spans: list[Span], text: str) -> list[Span]:
-    """Une pedaços vizinhos do mesmo rótulo (ver `_joinable`)."""
-    out: list[Span] = []
-    for span in sorted(spans, key=lambda s: s.start):
-        if out:
-            prev = out[-1]
-            gap = text[prev.end : span.start]
-            if prev.label is span.label and _joinable(span.label, gap):
-                score = min(prev.score, span.score)
-                out[-1] = Span(
-                    prev.start, span.end, prev.label, text[prev.start : span.end], "modelo", score
-                )
-                continue
-        out.append(span)
-    return out
+        return predict(self.tokenizer, self.logits, text)

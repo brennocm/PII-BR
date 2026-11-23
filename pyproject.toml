@@ -12,6 +12,8 @@ dependencies = []
 [project.optional-dependencies]
 # Modelo NER (pii_br.model). O núcleo funciona sem ele, só com regex + validação.
 model = ["torch>=2.4", "transformers>=5.0,<6"]
+# Modelo em ONNX Runtime (pii_br.onnx_model), o mesmo caminho da demo no navegador.
+onnx = ["onnxruntime>=1.20", "numpy"]
 
 [build-system]
 requires = ["uv_build>=0.9,<0.14"]
@@ -41,6 +43,8 @@ baseline = [
     "spacy",
 ]
 space = ["gradio"]
+# Exporta o modelo para ONNX (demo no navegador) e confere a saída em Python.
+onnx = ["onnx", "onnxruntime"]
 
 [tool.uv]
 default-groups = "all"
@@ -65,7 +69,7 @@ select = ["E", "F", "I", "B", "UP", "S", "SIM", "RUF", "ANN"]
 "src/pii_br/masking.py" = ["S311"]
 
 [tool.pyright]
-include = ["src", "tests", "data_gen", "training", "space", "scripts"]
+include = ["src", "tests", "data_gen", "training", "app", "space", "scripts"]
 typeCheckingMode = "strict"
 pythonVersion = "3.11"
 
@@ -89,7 +93,7 @@ reportUnknownArgumentType = false
 
 [[tool.pyright.executionEnvironments]]
 # gradio e huggingface_hub têm tipos incompletos.
-root = "space"
+root = "app"
 reportMissingTypeStubs = false
 reportUnknownMemberType = false
 reportUnknownVariableType = false

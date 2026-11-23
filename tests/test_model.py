@@ -1,22 +1,16 @@
 from pathlib import Path
-from typing import Any
 
 import pytest
 
 from pii_br import Detector, Entity
 from pii_br.model import NerModel, quantizable
+from pii_br.ner import to_spans
 from pii_br.words import words
 
 LOCAL_MODEL = Path(__file__).parents[1] / "outputs" / "mini"
 
 
-def fake_model(outputs: list[dict[str, Any]]) -> NerModel:
-    model = NerModel.__new__(NerModel)
-    model._pipe = lambda _text: outputs  # type: ignore[assignment]  # pyright: ignore[reportPrivateUsage, reportAttributeAccessIssue]
-    return model
-
-
-def test_predict_trims_filters_and_joins() -> None:
+def test_to_spans_trims_filters_and_joins() -> None:
     text = "Sou  Maria Souza , moro na Rua A, 12."
     raw = [
         {"entity_group": "NOME", "start": 3, "end": 10, "score": 0.9},  # " Maria" com espaços
@@ -26,7 +20,7 @@ def test_predict_trims_filters_and_joins() -> None:
         {"entity_group": "MISC", "start": 0, "end": 3, "score": 0.99},  # rótulo desconhecido
         {"entity_group": "CPF", "start": 16, "end": 17, "score": 0.5},  # só espaço
     ]
-    spans = fake_model(raw).predict(text)
+    spans = to_spans(text, raw)
     assert [(s.label, s.text, s.source) for s in spans] == [
         (Entity.NOME, "Maria Souza", "modelo"),
         (Entity.ENDERECO, "Rua A, 12", "modelo"),
@@ -42,13 +36,7 @@ def test_comma_joins_address_but_not_names() -> None:
         {"entity_group": "ENDERECO", "start": 12, "end": 17, "score": 0.9},
         {"entity_group": "ENDERECO", "start": 19, "end": 21, "score": 0.9},
     ]
-    assert [s.text for s in fake_model(raw).predict(text)] == ["Ana", "Bruno", "Rua A, 12"]
-
-
-def test_predict_empty_text() -> None:
-    assert (
-        fake_model([{"entity_group": "NOME", "start": 0, "end": 1, "score": 1}]).predict("  ") == []
-    )
+    assert [s.text for s in to_spans(text, raw)] == ["Ana", "Bruno", "Rua A, 12"]
 
 
 @pytest.mark.skipif(not (LOCAL_MODEL / "config.json").exists(), reason="modelo local ausente")
