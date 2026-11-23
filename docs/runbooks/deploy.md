@@ -31,10 +31,10 @@ Passo a passo para colocar no ar as quatro peças do projeto: repositório no Gi
 | Serviço | Para quê | Plano | Custo mensal | Link |
 | --- | --- | --- | --- | --- |
 | GitHub | Código, CI e deploy do Space | Free | R$ 0 | github.com |
-| Hugging Face | Dataset, modelo e Space (CPU basic) | Free | R$ 0 | huggingface.co |
+| Hugging Face | Dataset, modelo e Space (estático) | Free | R$ 0 | huggingface.co |
 | Kaggle | GPU para o treino (~30 min de 30 h/semana) | Free | R$ 0 | kaggle.com |
 
-Total: **R$ 0**. Nada aqui pede cartão de crédito. O único jeito de gerar custo seria trocar o hardware do Space para GPU ou CPU paga nas configurações dele; não faça isso.
+Total: **R$ 0**. Nada aqui pede cartão de crédito. Spaces Gradio e Docker agora exigem o plano PRO; o Space deste projeto é estático justamente para continuar grátis (ADR 0003).
 
 ## 3. Segredos e configuração
 
@@ -111,25 +111,27 @@ uv run hf upload brennocm/PII-BR outputs/model_card/README.md README.md
 
 ### Passo 7 — Space (≈ 10 min)
 
-1. huggingface.co → *New Space* → nome `PII-BR`, SDK **Gradio**, hardware **CPU basic (free)**, público.
-2. Token só para o Space: Settings → Access Tokens → *Fine-grained* → em *Repositories permissions*, escolha o Space `brennocm/PII-BR` com **Write**. Nome: `pii-br-space-deploy`.
-3. No terminal:
+O Space é **estático** (ADR 0003): o Hugging Face passou a cobrar por Spaces Gradio, e a página roda o pacote e o modelo no navegador. Já foi criado e publicado a partir desta máquina (`spaces/brennocm/PII-BR`, commit do modelo fixado em `scripts/deploy_space.py`). Falta só o deploy automático:
+
+1. Token só para o Space: Settings → Access Tokens → *Fine-grained* → em *Repositories permissions*, escolha o Space `brennocm/PII-BR` com **Write**. Nome: `pii-br-space-deploy`.
+2. No terminal:
    ```
+   ! gh auth login
    ! gh secret set HF_TOKEN
    ! gh variable set HF_SPACE --body "brennocm/PII-BR"
    ! gh workflow run deploy-space
    ```
-4. **Esperado:** o workflow `deploy-space` termina verde, e o Space fica *Building* e depois *Running* (5 a 10 min no primeiro build, por causa do torch).
-5. **Verificar:** abra o Space, clique nos 6 exemplos e confira:
-   - o status no topo diz `Modelo brennocm/PII-BR (int8, CPU)`;
+3. **Esperado:** o workflow `deploy-space` termina verde em ~1 min (não há build no Space estático).
+4. **Verificar:** abra o Space e confira:
+   - o status diz "Modelo e regras prontos" depois do download (~15 s na primeira visita, depois do cache);
    - o exemplo com CPF inválido mostra o alerta;
    - o exemplo sem PII não marca nada;
    - um texto de ~1.000 caracteres responde em menos de 3 s.
-6. **Se falhar:** *Logs* do Space. "Modelo indisponível" = o modelo ainda não existe ou é privado (o app segue só com regras). Erro de build = me mande as últimas linhas do log.
+5. **Se falhar:** abra o console do navegador (F12). "Modelo indisponível" = o arquivo `onnx/model_int8.onnx` não existe no commit fixado.
 
 A partir daqui, todo push na `main` com CI verde republica o Space sozinho.
 
-**Fixar a versão do modelo (recomendado):** na página do modelo, *Files → History*, copie o hash do último commit. No Space: *Settings → Variables and secrets → New variable* `PII_BR_MODEL_REVISION` = esse hash. Assim, um push acidental (ou malicioso) no repositório do modelo não muda o que o Space roda; para atualizar, troque o hash.
+**Modelo novo:** depois de treinar, rode `uv run python -m training.export_onnx --model brennocm/PII-BR --data data --push`, copie o hash do commit que ele cria (página do modelo → *Files → History*) e troque `MODEL_REVISION` em `scripts/deploy_space.py` (ou defina a variável `PII_BR_MODEL_REVISION` no GitHub). Sem isso a demo continua no modelo anterior, de propósito.
 
 ### Passo 8 — Portfólio (≈ 30 min)
 

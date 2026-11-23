@@ -1,6 +1,6 @@
 # 0002. Deploy: Hugging Face Hub e Spaces, treino no Kaggle
 
-- Status: accepted
+- Status: accepted (a demo foi substituída pelo ADR 0003)
 - Date: 2026-11-23
 
 ## Context

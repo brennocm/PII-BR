@@ -1,8 +1,8 @@
 # PII-BR
 
-Detector de dados pessoais (PII) em português do Brasil para a LGPD: validadores determinísticos (CPF, CNPJ numérico e alfanumérico, telefone, CEP, e-mail), um modelo NER (BERTimbau) treinado em dados sintéticos e um Space Gradio que destaca e mascara PII. Escopo, fases e critérios de aceite em `SPEC.md`.
+Detector de dados pessoais (PII) em português do Brasil para a LGPD: validadores determinísticos (CPF, CNPJ numérico e alfanumérico, telefone, CEP, e-mail), um modelo NER (BERTimbau) treinado em dados sintéticos e um Space estático (roda no navegador) que destaca e mascara PII. Escopo, fases e critérios de aceite em `SPEC.md`.
 
-Fase atual: código das 5 fases pronto; falta publicar (contas, treino no Kaggle, Space). Passo a passo em `docs/runbooks/deploy.md`.
+Fase atual: dataset, modelo e Space estático (ADR 0003) publicados; falta o deploy automático pelo GitHub Actions (secret `HF_TOKEN` e variável `HF_SPACE`). Passo a passo em `docs/runbooks/deploy.md`.
 
 Stack: Python 3.11 + uv — ver `docs/adr/0001-stack.md`. Deploy: Hugging Face Hub/Spaces — ver `docs/adr/0002-deploy.md`.
 
@@ -15,11 +15,14 @@ Stack: Python 3.11 + uv — ver `docs/adr/0001-stack.md`. Deploy: Hugging Face H
 | `src/pii_br/recognizers.py` | Regex + validação + palavras de contexto → `recognize(text)` |
 | `src/pii_br/merge.py`, `detector.py` | Fusão regex × modelo e o pipeline híbrido `Detector` |
 | `src/pii_br/masking.py` | `Masker`: redação, parcial, pseudônimo (HMAC + sal) e sintético |
-| `src/pii_br/model.py` | `NerModel` (transformers, int8, janelas de 256); único arquivo com torch |
+| `src/pii_br/ner.py` | Tokenizer WordPiece, janelas de 256 e decodificação em Python puro (servem ao torch, ao ONNX e ao navegador) |
+| `src/pii_br/model.py` | `NerModel` (torch, int8); único arquivo com torch |
+| `src/pii_br/onnx_model.py` | `OnnxModel` (onnxruntime), o mesmo caminho da demo no navegador |
 | `src/pii_br/words.py` | Tokenização por palavras usada no dataset e na avaliação |
 | `data_gen/` | Templates YAML, `generate.py`, `test_real.tsv` (revisado à mão), `push_dataset.py` |
-| `training/` | `train.ipynb` (Kaggle/Colab; `SMOKE=1` em CPU), `evaluate.py`, `model_card.py` |
-| `space/` | App Gradio; `scripts/deploy_space.py` monta a pasta com uma cópia do pacote |
+| `training/` | `train.ipynb` (Kaggle/Colab; `SMOKE=1` em CPU), `evaluate.py`, `model_card.py`, `export_onnx.py` |
+| `space/` | Demo estática do Space (Pyodide + onnxruntime-web, ADR 0003); `scripts/deploy_space.py` monta a pasta com o pacote em zip |
+| `app/` | App Gradio local (`mise run dev`), com upload de `.txt`/`.csv` |
 | `cards/` | Templates dos cards do dataset e do modelo (preenchidos pelos scripts) |
 | `tests/` | pytest; `test_oracle.py` compara os validadores com fontes independentes |
 | `docs/adr` | Decisões — ler antes de mudar a arquitetura |
@@ -28,7 +31,8 @@ Stack: Python 3.11 + uv — ver `docs/adr/0001-stack.md`. Deploy: Hugging Face H
 ## Comandos
 
 - `mise install && mise run setup` — prepara o ambiente e o hook de pre-commit (lefthook)
-- `mise run dev` — app do Space local (`PII_BR_MODEL=<repo|pasta>` para usar um modelo)
+- `mise run dev` — app Gradio local (`PII_BR_MODEL=<repo|pasta>` para usar um modelo)
+- `mise run web` — demo estática do Space em http://127.0.0.1:8000 (modelo do Hub)
 - `mise run check` — **definição de pronto**: formato, lint, pyright estrito, testes
 - `mise run check:all` — o que o CI roda: check + cobertura ≥ 90%, deptry, vulture, pip-audit, gitleaks
 - `mise run fix` — formatação e lint automáticos
@@ -36,6 +40,7 @@ Stack: Python 3.11 + uv — ver `docs/adr/0001-stack.md`. Deploy: Hugging Face H
 - `uv run python -m data_gen.generate --out data` — gera o dataset (`--small` para 1/10)
 - `uv sync --all-extras --group train --group baseline --group hub --group space` — tudo (torch CPU, Presidio, Gradio)
 - `uv run python -m training.evaluate --model <repo|pasta> --data data` — avaliação com baselines
+- `uv run python -m training.export_onnx --model <repo|pasta> --data data [--push]` — ONNX int8 para a demo
 
 ## Regras que a ferramenta não impõe
 
@@ -58,9 +63,11 @@ Stack: Python 3.11 + uv — ver `docs/adr/0001-stack.md`. Deploy: Hugging Face H
 - `Detector`: o limiar e o filtro de entidades são aplicados **antes** da fusão. Filtrar depois deixa um span fraco do modelo tomar o lugar de um achado da regex e sumir, vazando o dado.
 - `merge` nunca descobre um caractere que algum span cobria (teste de propriedade em `test_merge_masking.py`); o modelo só substitui um span da regex que cobre por inteiro.
 - Regex sobre texto do usuário tem que ser linear: o e-mail roda só numa janela em volta de cada `@`. Há teste de tempo em `test_recognizers.py`.
-- `space/requirements.txt` e o `pip install` do notebook fixam as mesmas versões do `uv.lock` (`tests/test_pins.py`); atualize junto.
+- `app/requirements.txt` e o `pip install` do notebook fixam as mesmas versões do `uv.lock` (`tests/test_pins.py`); atualize junto.
 - int8 dinâmico na saída do FFN (`layer.N.output.dense`) destrói o modelo (recall cai pela metade, scores ~0,3). `quantizable` em `model.py` deixa essas camadas em fp32; ao mudar a quantização, compare com `quantize=False` num split.
-- No Space, `gr.State` copia o valor inicial: o `Masker` (com o sal) é criado na primeira requisição de cada sessão, nunca no import.
+- O tokenizer de `ner.py` recebe as palavras de `words.py`, como no treino (`is_split_into_words`); `test_ner.py` compara com o `tokenizers` do HF. O pipeline `token-classification` do `transformers` agrupa diferente e perde F1 (0,94 → 0,87 no `test_real`).
+- `space/` roda no Pyodide: o pacote não pode importar nada fora da biblioteca padrão no import (`test_space.py` roda o zip com `python -I -S`).
+- No app Gradio, `gr.State` copia o valor inicial: o `Masker` (com o sal) é criado na primeira requisição de cada sessão, nunca no import.
 
 ## Pronto significa
 

@@ -18,7 +18,7 @@ O projeto entrega um detector de dados pessoais (PII) em português do Brasil, p
 | --- | --- | --- |
 | Dataset | `datasets/brennocm/PII-BR` | Frases sintéticas anotadas em BIO, splits train/val/test/test-hard/test-real, dataset card |
 | Modelo | `brennocm/PII-BR` | NER fine-tuned, model card com métricas por entidade |
-| Space | `spaces/brennocm/PII-BR` | App Gradio em CPU gratuita: detecta, destaca e mascara |
+| Space | `spaces/brennocm/PII-BR` | Página estática que roda no navegador (Pyodide + ONNX): detecta, destaca e mascara (ADR 0003) |
 | Código | GitHub `brennocm/PII-BR` | Gerador, treino, avaliação, app e validadores, com testes |
 
 ## Viabilidade no hardware atual
@@ -163,18 +163,18 @@ O modelo e o pipeline são avaliados de formas diferentes, porque o pipeline nã
   - **Só regex:** os recognizers de `pii_br` sem o modelo.
   - **Presidio:** `presidio-analyzer` com NLP engine spaCy `pt_core_news_lg` e os recognizers padrão registrados para `pt` (por padrão eles só atendem `en`). Mapeamento de rótulos documentado (`PERSON`→`NOME`, `EMAIL_ADDRESS`→`EMAIL`, `PHONE_NUMBER`→`TELEFONE`, `LOCATION`→`ENDERECO`); entidades sem equivalente contam como não detectadas. A configuração vai no card, para que a comparação seja reproduzível e justa.
 - Tabela de erros com exemplos (falsos negativos primeiro) publicada no model card.
-- Medir a perda de F1 da quantização int8 no test-hard e reportar no card.
+- Medir a perda de F1 da quantização int8 e reportar no card: o `evaluate.py` roda o modelo isolado em fp32 e em int8 em todos os splits. A saída do FFN (`layer.N.output.dense`) fica em fp32, porque em int8 dinâmico ela derruba o recall pela metade.
 
 **Model card.** Uso pretendido, entidades, métricas por split e baseline, efeito do int8, limitações (treino só em dados sintéticos), exemplo de uso com `pipeline("token-classification", aggregation_strategy="first", stride=64)`, link para dataset e Space.
 
 ## Componente 3 — Space (demo)
 
-O Space é um app Gradio em CPU gratuita: o usuário cola um texto, vê as entidades destacadas e recebe a versão mascarada na estratégia escolhida.
+O Space é uma página estática que roda inteira no navegador (ADR 0003: o HF passou a cobrar por Spaces Gradio): o pacote `pii_br` roda no Pyodide e o modelo ONNX int8 no `onnxruntime-web`. O usuário cola um texto, vê as entidades destacadas e recebe a versão mascarada na estratégia escolhida; o texto não sai do navegador. O app Gradio descrito abaixo (upload de arquivo, JSON de spans) segue em `app/` como app local.
 
 **Pipeline híbrido**
 
 1. **Recognizers determinísticos:** regex para CPF, CNPJ (numérico e alfanumérico), e-mail, telefone e CEP, seguidas de validação (dígito verificador, DDD, data). Entrada normalizada antes (NFKC, dígitos de largura total, espaços não separáveis).
-2. **Modelo NER:** versão int8 dinâmica, roda sobre o texto inteiro em janelas de 256 tokens com sobreposição de 64 (`stride` do pipeline do `transformers`). Um texto de 1.000 caracteres já tem cerca de 400 tokens, então o janelamento vale para quase todo uso real.
+2. **Modelo NER:** versão int8 dinâmica, roda sobre o texto inteiro em janelas de 256 tokens com sobreposição de 64 (`pii_br/ner.py`: cada token usa a janela em que tem mais contexto; o rótulo de cada palavra vem do primeiro subtoken, como no treino). Um texto de 1.000 caracteres já tem cerca de 400 tokens, então o janelamento vale para quase todo uso real.
 3. **Fusão de spans:** sobreposições resolvidas por prioridade. Regex com dígito válido vence; o modelo vence em `NOME`, `ENDERECO` e `RG`; em empate fica o span maior. Sequências de 11 dígitos sem pontuação que podem ser CPF ou celular com DDD são decididas pela palavra de contexto mais próxima ("CPF", "tel", "whats"); sem contexto, viram `CPF` se o dígito fecha e `TELEFONE` caso contrário.
 4. **Confiança:** cada span sai com fonte (`regex`, `modelo`, `ambos`) e score. CPF/CNPJ com formato certo e dígito errado vira alerta "possível documento inválido", mascarado por padrão.
 
@@ -206,13 +206,13 @@ O pseudônimo usa HMAC-SHA256 com sal gerado por sessão e nunca exibido, para q
 - Aviso fixo: o texto não é armazenado nem logado; não cole dados reais de terceiros em demos públicas.
 - Para o aviso ser verdadeiro: `flagging_mode="never"`, `GRADIO_ANALYTICS_ENABLED=False`, nenhum `print`/log do texto de entrada, arquivos temporários de upload apagados após o processamento. Um teste verifica que o app não escreve o texto em log.
 
-**Configuração do Space.** README com front matter (`sdk: gradio`, `python_version: "3.11"`, `app_file: app.py`), modelo baixado do Hub e quantizado uma vez na inicialização. O Space gratuito dorme após 48 h sem acesso; o primeiro acesso leva de 30 s a 1 min.
+**Configuração do Space.** README com front matter `sdk: static`; `scripts/deploy_space.py` monta `index.html`, `app.js`, `style.css`, `config.json` (modelo e commit) e `pii_br.zip` (pacote + `bridge.py`). O modelo (`onnx/model_int8.onnx`) e o tokenizer vêm do repositório do modelo no commit fixado e ficam no Cache Storage do navegador. Pyodide e `onnxruntime-web` com versão exata e SRI.
 
 **Pacote reutilizável.** A lógica fica em `pii_br/` (validadores, recognizers, fusão, mascaramento), importável fora do Space e sem dependência de `torch` no núcleo (o modelo é opcional), com recognizers opcionais no formato do Presidio.
 
 ## Estrutura do repositório e stack
 
-Um único repositório no GitHub concentra todo o código; o Space recebe só a pasta `space/` e o pacote.
+Um único repositório no GitHub concentra todo o código; o Space recebe só a pasta `space/` e o pacote em zip.
 
 ```text
 PII-BR/
@@ -236,7 +236,7 @@ PII-BR/
 
 **Stack:** Python 3.11 (via `uv`), `faker`, `datasets`, `transformers`, `torch` (CPU localmente), `seqeval`, `gradio`, `huggingface_hub`, `pytest`; `presidio-analyzer` e `spacy` + `pt_core_news_lg` só no extra `[baseline]` e nos recognizers opcionais.
 
-**Deploy do Space:** GitHub Action que, a cada push na `main` com testes verdes, envia `space/` e uma cópia de `src/pii_br/` ao Space via `huggingface_hub.upload_folder`, usando o secret `HF_TOKEN` (token fine-grained com escrita só no Space). O CI não instala `torch` nos testes do núcleo, para rodar rápido.
+**Deploy do Space:** GitHub Action que, a cada push na `main` com testes verdes, envia a página de `space/` e o pacote em zip ao Space via `huggingface_hub.upload_folder`, usando o secret `HF_TOKEN` (token fine-grained com escrita só no Space). O CI não instala `torch` nos testes do núcleo, para rodar rápido.
 
 ## Plano de execução
 

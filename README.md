@@ -92,7 +92,8 @@ Requer [mise](https://mise.jdx.dev) e [uv](https://docs.astral.sh/uv/).
 
 ```bash
 mise install && mise run setup                   # dependências + hook de pre-commit
-mise run dev                                     # app em http://127.0.0.1:7860
+mise run dev                                     # app Gradio em http://127.0.0.1:7860
+mise run web                                     # demo do Space em http://127.0.0.1:8000
 mise run check                                   # formato, lint, pyright estrito, testes
 uv run python -m data_gen.generate --out data    # gera o dataset (reprodutível por seed)
 ```
@@ -102,7 +103,8 @@ uv run python -m data_gen.generate --out data    # gera o dataset (reprodutível
 | `src/pii_br/` | Pacote: validadores, recognizers, fusão, mascaramento, modelo |
 | `data_gen/` | Templates, gerador do dataset, `test_real` e publicação no Hub |
 | `training/` | Notebook de treino (Kaggle/Colab), avaliação com baselines, model card |
-| `space/` | App Gradio do Space |
+| `space/` | Demo do Space: página estática que roda o pacote (Pyodide) e o modelo (ONNX) no navegador |
+| `app/` | App Gradio local, com upload de `.txt` e `.csv` |
 | `docs/` | Decisões (ADRs) e o passo a passo de publicação |
 
 O notebook `training/train.ipynb` treina em GPU gratuita do Kaggle em cerca de 30 minutos. Para testar o código em CPU: `SMOKE=1 LOCAL_DATA=$PWD/data uv run --group train jupyter nbconvert --execute training/train.ipynb --to notebook --output-dir outputs/smoke`.
