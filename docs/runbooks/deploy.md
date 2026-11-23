@@ -18,11 +18,9 @@ Passo a passo para colocar no ar as quatro peças do projeto: repositório no Gi
 | Pipeline com um modelo de verdade | Modelo pequeno treinado em CPU (`outputs/mini`): `tests/test_model.py` roda o híbrido num texto de 1.400 caracteres |
 | Versões do Space e do notebook iguais às do `uv.lock` | `tests/test_pins.py` |
 
-**Pronto, mas só verificável depois da publicação**
+**Publicado**
 
-- Download do dataset pelo notebook no Kaggle, treino em GPU e `push_to_hub` do modelo.
-- Workflow `deploy-space` no GitHub Actions e o Space rodando no Hugging Face.
-- Latência no hardware do Space (medida local: ~0,3 s para 1.000 caracteres com int8).
+Verificado em 2026-11-23: dataset e modelo publicados, model card com fp32 × int8, workflow `deploy-space` verde a cada push na `main` e o Space rodando os 6 exemplos no navegador.
 
 **Depende de você** (passos abaixo): contas, tokens, revisão do `test_real`, rodar o treino, criar os secrets.
 
@@ -111,7 +109,7 @@ uv run hf upload brennocm/PII-BR outputs/model_card/README.md README.md
 
 ### Passo 7 — Space (≈ 10 min)
 
-O Space é **estático** (ADR 0003): o Hugging Face passou a cobrar por Spaces Gradio, e a página roda o pacote e o modelo no navegador. Já foi criado e publicado a partir desta máquina (`spaces/brennocm/PII-BR`, commit do modelo fixado em `scripts/deploy_space.py`). Falta só o deploy automático:
+O Space é **estático** (ADR 0003): o Hugging Face passou a cobrar por Spaces Gradio, e a página roda o pacote e o modelo no navegador. Feito em 2026-11-23: Space publicado (`spaces/brennocm/PII-BR`, commit do modelo fixado em `scripts/deploy_space.py`) e deploy automático ativo. Os passos abaixo ficam para refazer a configuração (por exemplo, ao trocar o token):
 
 1. Token só para o Space: Settings → Access Tokens → *Fine-grained* → em *Repositories permissions*, escolha o Space `brennocm/PII-BR` com **Write**. Nome: `pii-br-space-deploy`.
 2. No terminal:

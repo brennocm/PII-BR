@@ -13,9 +13,9 @@ Ferramentas como o Presidio vão bem em inglês, mas não têm reconhecedores pa
 
 | Peça | Onde |
 | --- | --- |
-| Demo (Space) | `huggingface.co/spaces/brennocm/PII-BR` |
-| Modelo | `huggingface.co/brennocm/PII-BR` |
-| Dataset | `huggingface.co/datasets/brennocm/PII-BR` |
+| Demo (Space) | [huggingface.co/spaces/brennocm/PII-BR](https://huggingface.co/spaces/brennocm/PII-BR) |
+| Modelo | [huggingface.co/brennocm/PII-BR](https://huggingface.co/brennocm/PII-BR) |
+| Dataset | [huggingface.co/datasets/brennocm/PII-BR](https://huggingface.co/datasets/brennocm/PII-BR) |
 | Código | este repositório |
 
 ## Entidades
@@ -77,10 +77,13 @@ flowchart LR
 
 ## Resultados
 
-Os números completos, por entidade e por split, ficam no model card do modelo publicado. Até o treino final rodar, a tabela mostra os baselines (métrica por span, critério de sobreposição, `test_real`):
+Métrica por span, critério de sobreposição, no `test_real` (frases escritas à mão, fora dos templates do treino). Os números por entidade e por split estão no [model card](https://huggingface.co/brennocm/PII-BR).
 
 | Sistema | Precisão | Recall | F1 |
 | --- | --- | --- | --- |
+| **Híbrido (modelo int8 + regex)** | 0,939 | 0,990 | **0,964** |
+| Só o modelo (int8) | 0,928 | 0,955 | 0,941 |
+| Só o modelo (fp32) | 0,928 | 0,960 | 0,944 |
 | Só regex (este pacote, sem modelo) | 0,989 | 0,450 | 0,619 |
 | Presidio (recognizers padrão, spaCy pt) | 0,595 | 0,604 | 0,600 |
 
