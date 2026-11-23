@@ -1,5 +1,8 @@
 <p align="center">
-  <img src="docs/assets/logo.png" alt="PII-BR — Detector e anonimizador LGPD" width="600">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/logo-dark.png">
+    <img src="docs/assets/logo-light.png" alt="PII-BR — Detector e anonimizador LGPD" width="600">
+  </picture>
 </p>
 
 # PII-BR
