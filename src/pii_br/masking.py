@@ -65,7 +65,12 @@ class Masker:
             return _partial(label, value)
         if strategy == "pseudonym":
             return self._pseudonym(label, value)
-        return self._synthetic(label, value)
+        # Sorteia de novo se sair o próprio valor original (ex.: um nome da lista fixa).
+        for _ in range(20):
+            new = self._synthetic(label, value)
+            if _normalize(label, new) != _normalize(label, value):
+                return new
+        return f"[{label.value}]"
 
     # ----------------------------------------------------------------- pseudônimo
     def _pseudonym(self, label: Entity, value: str) -> str:

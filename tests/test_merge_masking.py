@@ -27,8 +27,8 @@ TEXT = "Sou Ana Lima, CPF 123.456.789-09, RG 12.345.678-9, tel (11) 98765-4321."
 
 def test_same_label_becomes_ambos_with_regex_bounds() -> None:
     regex = recognize(TEXT)
-    model = [model_span(TEXT, "CPF 123.456.789-09", Entity.CPF, 0.7)]
-    cpf = next(s for s in merge(regex, model) if s.label is Entity.CPF)
+    model = [model_span(TEXT, "23.456.789-0", Entity.CPF, 0.7)]
+    [cpf] = [s for s in merge(regex, model) if s.label is Entity.CPF]
     assert cpf.source == "ambos" and cpf.text == "123.456.789-09" and cpf.score == 0.99
 
 
@@ -59,6 +59,49 @@ def test_longer_span_wins_otherwise() -> None:
     regex = [Span(4, 13, Entity.CEP, "01310-100", "regex", 0.85, None)]
     model = [Span(4, 9, Entity.TELEFONE, "01310", "modelo", 0.9)]
     assert merge(regex, model) == regex
+
+
+def test_partial_model_span_never_uncovers_regex() -> None:
+    text = "moro na Rua das Flores, 12, CEP 01310-100."
+    regex = recognize(text)
+    model = [
+        model_span(text, "Rua das Flores, 12", Entity.ENDERECO),
+        model_span(text, "-100", Entity.ENDERECO, 0.6),
+    ]
+    merged = merge(regex, model)
+    assert [(s.label, s.text) for s in merged] == [
+        (Entity.ENDERECO, "Rua das Flores, 12"),
+        (Entity.CEP, "01310-100"),
+    ]
+
+
+def test_model_keeps_its_part_outside_a_stronger_regex() -> None:
+    text = "Rua A 12 CPF 123.456.789-09 fim"
+    merged = merge(recognize(text), [model_span(text, "Rua A 12 CPF 123.456", Entity.ENDERECO)])
+    assert [(s.label, s.text) for s in merged] == [
+        (Entity.ENDERECO, "Rua A 12 CPF"),
+        (Entity.CPF, "123.456.789-09"),
+    ]
+
+
+def test_merge_never_uncovers_characters() -> None:
+    rng = random.Random(7)
+    text = TEXT
+    regex = recognize(text)
+    for _ in range(300):
+        a = rng.randrange(len(text))
+        b = rng.randrange(a + 1, len(text) + 1)
+        m = Span(a, b, rng.choice(list(Entity)), text[a:b], "modelo", rng.random())
+        covered = {i for s in [*regex, m] for i in range(s.start, s.end) if not text[i].isspace()}
+        merged = merge(regex, [m])
+        after = {i for s in merged for i in range(s.start, s.end)}
+        lost = {i for i in covered - after if text[i] not in _PUNCT}
+        assert not lost, (m, merged)
+        assert all(text[s.start : s.end] == s.text for s in merged)
+        assert all(not x.overlaps(y) for x in merged for y in merged if x is not y)
+
+
+_PUNCT = " \t\n,;:-./()"
 
 
 def test_detector_threshold_keeps_invalid_alerts() -> None:
@@ -143,3 +186,55 @@ def test_mask_full_synthetic_text_has_no_original_values() -> None:
     out = mask(SAMPLE, spans_for(SAMPLE), "synthetic")
     for original in ("Ana Lima", "123.456.789-09", "ana.lima@example.com", "98765-4321"):
         assert original not in out
+
+
+class _WeakModel:
+    """Modelo que marca como RG, com confiança baixa, o trecho [4, 19)."""
+
+    def predict(self, text: str) -> list[Span]:
+        return [Span(4, 19, Entity.RG, text[4:19], "modelo", 0.3)]
+
+
+def test_weak_model_span_never_unmasks_regex_finding() -> None:
+    spans = Detector(_WeakModel()).detect("tel (11) 98765-4321")
+    assert [(s.label, s.source) for s in spans] == [(Entity.TELEFONE, "regex")]
+
+
+def test_unselected_model_entity_never_unmasks_regex_finding() -> None:
+    spans = Detector(_WeakModel(), threshold=0.1).detect("tel (11) 98765-4321", [Entity.TELEFONE])
+    assert [s.label for s in spans] == [Entity.TELEFONE]
+
+
+def test_threshold_applies_only_to_model() -> None:
+    spans = Detector(threshold=0.95).detect("meu numero 12345678909")
+    assert [s.label for s in spans] == [Entity.CPF]
+
+
+def test_synthetic_never_returns_the_original_value() -> None:
+    masker = Masker(rng=random.Random(0))
+    for name in ("Ana Lima", "Bruno Costa"):
+        assert all(masker.replacement(Entity.NOME, name, "synthetic") != name for _ in range(200))
+    one_digit = "7"  # só 10 valores possíveis: força a repetição e o fallback
+    assert all(
+        masker.replacement(Entity.CEP, one_digit, "synthetic") != one_digit for _ in range(200)
+    )
+
+
+@pytest.mark.parametrize(
+    ("text", "partial", "expected"),
+    [
+        ("nascido em 14/06/1992, ok", "14", "14/06/1992"),
+        ("nascida em 3 de julho de 1985.", "julho de 1985", "3 de julho de 1985"),
+        ("nasc. 01-02-90", "02-90", "01-02-90"),
+    ],
+)
+def test_partial_birth_date_is_completed(text: str, partial: str, expected: str) -> None:
+    spans = Detector(FakeModel([model_span(text, partial, Entity.DATA_NASC)])).detect(text)
+    assert [(s.label, s.text) for s in spans] == [(Entity.DATA_NASC, expected)]
+
+
+def test_date_completion_does_not_eat_other_spans() -> None:
+    text = "em 14/06/1992 e 15/11/2026"
+    model = [model_span(text, "14", Entity.DATA_NASC)]
+    spans = Detector(FakeModel(model)).detect(text)
+    assert [s.text for s in spans] == ["14/06/1992"]  # a outra data não é de nascimento
