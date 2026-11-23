@@ -1,0 +1,5 @@
+# Torch só para CPU (o Space gratuito não tem GPU; o wheel CUDA tem ~2 GB a mais).
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.15.0+cpu
+transformers==5.23.0
+gradio==6.32.0

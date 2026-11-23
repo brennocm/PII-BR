@@ -1,0 +1,41 @@
+name: deploy-space
+# Publica o Space depois que o CI passa num push para a main.
+on:
+  workflow_run:
+    workflows: [ci]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-space
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push')
+    runs-on: ubuntu-latest
+    env:
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
+      HF_SPACE: ${{ vars.HF_SPACE }}
+    steps:
+      - name: Sem configuração, não publica
+        if: env.HF_TOKEN == '' || env.HF_SPACE == ''
+        run: echo "::notice::Defina o secret HF_TOKEN e a variável HF_SPACE para publicar o Space."
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: env.HF_TOKEN != '' && env.HF_SPACE != ''
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+      - uses: jdx/mise-action@924e7c586e33d7d4bae9c14e26c5d22e2beb6e78 # v5.3.0
+        if: env.HF_TOKEN != '' && env.HF_SPACE != ''
+      - name: Publica no Hugging Face
+        if: env.HF_TOKEN != '' && env.HF_SPACE != ''
+        run: |
+          uv sync --locked --only-group hub --no-install-project
+          uv run --no-sync python scripts/deploy_space.py --repo "$HF_SPACE"
