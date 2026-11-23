@@ -23,6 +23,11 @@ class Entity(StrEnum):
     DATA_NASC = "DATA_NASC"
 
 
+# Rótulos BIO do dataset e do modelo, na ordem dos ids (O = 0). Mudar a ordem invalida
+# modelos já treinados.
+BIO_LABELS: tuple[str, ...] = ("O", *(f"{p}-{e.value}" for e in Entity for p in ("B", "I")))
+
+
 @dataclass(frozen=True, slots=True)
 class Span:
     """Trecho de PII em offsets de caractere sobre o texto original (fim exclusivo).

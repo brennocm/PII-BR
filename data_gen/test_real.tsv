@@ -1,0 +1,216 @@
+# test_real: frases escritas fora do sistema de templates, com dados fictícios.
+# Formato: domínio<TAB>texto com [valor](RÓTULO); \n vira quebra de linha.
+# Títulos (Sr., Dra., dona) ficam fora do span de NOME. REVISAR À MÃO antes de publicar.
+atendimento	boa tarde, aqui quem fala é a [Rosimeire Aparecida dos Santos](NOME), to ligando pq cortaram minha luz mesmo eu tendo pago
+atendimento	Meu CPF? Peraí que vou pegar… [158.813.998-03](CPF). Isso.
+atendimento	o cadastro tá no nome do meu marido, [Jailson](NOME), mas quem paga sou eu
+atendimento	Senhor, só para confirmar: o número com final 4321 é [(81) 99812-4321](TELEFONE)?
+atendimento	Moro na [Rua Professor Lauro Müller, 1.230, bloco C, apto 504](ENDERECO), perto do mercado.
+atendimento	Pode anotar o CEP: [88015-700](CEP), Florianópolis.
+atendimento	A Sra. [Maria José Ferreira Lima](NOME) está ligando de novo sobre o protocolo 20251104883.
+atendimento	Ela nasceu em [12 de outubro de 1948](DATA_NASC), já tem prioridade no atendimento.
+atendimento	Tentei pagar o boleto 23793.38128 60000.000003 00000.000400 1 84340000010000 e deu erro.
+atendimento	Quero cancelar a assinatura, não uso faz meses. Meu e-mail é [jessica.m.oliveira@example.com](EMAIL).
+atendimento	o numero do pedido é 8834512209 e nada de chegar
+atendimento	Bom dia! O técnico [Cláudio](NOME) esteve aqui ontem e não resolveu.
+atendimento	Para segunda via, informe o CPF do titular: [69879730917](CPF)
+atendimento	Atendimento encerrado. Avalie de 1 a 5 a sua experiência.
+atendimento	Sua fatura de novembro, no valor de R$ 189,90, vence dia 15.
+atendimento	A Claro não tem nada a ver com isso, o problema é da operadora antiga.
+atendimento	Quero falar com o supervisor. Sou [Hélio Takashi Nakamura](NOME), cliente há 12 anos.
+atendimento	O celular cadastrado é [21 3345-8890](TELEFONE)? Esse é fixo, não recebo SMS.
+atendimento	Fiz o pix pro CNPJ [11.417.075/0001-99](CNPJ) e não caiu na conta de vocês?
+atendimento	A entrega foi feita no endereço errado, era pra [Travessa São Benedito, 45, fundos](ENDERECO).
+atendimento	Pode ligar no [11 9 7766-1234](TELEFONE) depois das 18h
+atendimento	Meu filho [Arthur Gabriel](NOME) nasceu em [03/02/2019](DATA_NASC), quero incluir no plano.
+atendimento	Me passa o protocolo de novo? Anotei 4021 e não acho.
+atendimento	O titular faleceu. Era meu pai, [Sebastião Rodrigues da Costa](NOME), CPF [455.681.518-57](CPF).
+atendimento	Tô sem internet desde sábado no Jardim Botânico.
+whatsapp	gente o [Wesley](NOME) mandou o pix errado kkkk
+whatsapp	me manda teu cpf q eu faço o cadastro
+whatsapp	[844.729.405-66](CPF) esse é o meu
+whatsapp	salva aí: [(71) 98877-6655](TELEFONE) é o novo da [Dandara](NOME)
+whatsapp	alguém tem o zap do [Juninho](NOME) do futebol?
+whatsapp	chave pix é o celular [71988776655](TELEFONE)
+whatsapp	manda no meu email [lucas_dev99@example.com](EMAIL) que eu imprimo
+whatsapp	tô no condomínio, [Rua das Orquídeas 77](ENDERECO), torre 2
+whatsapp	feliz aniversário Tia [Lúcia](NOME)!!! 🎉🎉
+whatsapp	nasci [29/02/1996](DATA_NASC) então só faço aniversário de 4 em 4 anos kkk
+whatsapp	o código do ifood é 4521
+whatsapp	bora no show sábado? ingresso tá R$ 120
+whatsapp	pix pro [NT.R5P.ZV7/0001-27](CNPJ) da lojinha, é o cnpj novo deles
+whatsapp	ela mora no [Edifício Solar, Av. Boa Viagem, 3200, apto 1101](ENDERECO)
+whatsapp	cep [50020-000](CEP) ou [50020000](CEP)? n lembro
+whatsapp	[Vitória](NOME) to esperando teu pix
+whatsapp	manda o rg tbm: [MG-14.882.093](RG)
+whatsapp	vou passar teu contato pra Dona [Cida](NOME)
+whatsapp	meu cpf termina em 09, o resto te passo no privado
+whatsapp	o entregador ligou de [11 4002-8922](TELEFONE)?? kkkk
+whatsapp	alguém sabe que horas abre o posto de saúde?
+whatsapp	ok
+whatsapp	[pedro.henrique@example.com.br](EMAIL) esse é o certo, o outro eu perdi a senha
+whatsapp	mãe, o cep da vó é [69005-040](CEP)
+whatsapp	a [Ana Júlia](NOME) e o [Kauã](NOME) vão chegar junto
+email	Prezada Dra. [Fernanda Arantes](NOME), segue em anexo o laudo solicitado.
+email	Olá, [Rafael](NOME)! Conforme conversamos, envio meus dados para o cadastro: [Patrícia Gomes Bezerra](NOME), CPF [976.846.978-11](CPF), nascida em [17/08/1987](DATA_NASC).
+email	Att.,\n[Gustavo Henrique Lemos](NOME)\nCoordenador de TI\n[(31) 3277-1050](TELEFONE)
+email	Favor emitir a NF em nome de Padaria Pão Quente Ltda., CNPJ [80.932.081/6727-07](CNPJ).
+email	Bom dia, equipe. O servidor ficará fora do ar das 22h às 2h.
+email	O contrato foi assinado ontem pelas duas partes.
+email	Por favor, atualizem meu endereço de entrega para [Rua Barão de Itapetininga, 255, sala 1204](ENDERECO), CEP [01042-001](CEP).
+email	Quem pode me ajudar com o acesso? Meu usuário é [camila.rocha@example.com](EMAIL).
+email	Encaminho o contato do fornecedor: [Sérgio Baptista](NOME) – [sergio@example.com.br](EMAIL) – [(41) 99652-0081](TELEFONE).
+email	Lembramos que o prazo para o envio das propostas é dia 30/11.
+email	Segue o RG digitalizado ([12.443.871-5](RG)) e o comprovante de residência.
+email	Oi [Bia](NOME), consegue revisar o relatório até sexta?
+email	A Profa. Dra. [Eliane Cardoso](NOME) confirmou presença na banca.
+email	Informamos que a reunião do conselho foi remarcada para 05/12, às 14h.
+email	Reembolso referente à viagem de [Marcos Vinícius Teixeira](NOME) (CPF [31778486452](CPF)): R$ 1.245,30.
+email	Assunto: Re: Re: Fwd: cotação 2026
+email	Enviado do meu iPhone
+email	Me liga no [+55 (62) 98110-4477](TELEFONE) se tiver dúvida.
+email	O pagamento será feito na conta PJ da empresa, CNPJ [ZW.UPR.CIH/0001-08](CNPJ).
+email	Caro Sr. [Almeida](NOME), agradecemos o contato.
+email	Bom dia, segue a escala de plantão de dezembro.
+email	Nosso novo escritório fica na [Avenida Getúlio Vargas, 1300, 7º andar](ENDERECO), Belo Horizonte.
+email	Confirmo o recebimento dos documentos de [Luana Prado](NOME), nascida em [1º de março de 1999](DATA_NASC).
+email	Prezados, o sistema de ponto será atualizado amanhã.
+email	Lembrete: o aniversariante do mês é o [Tiago Oliveira](NOME) 🎂
+contrato	CONTRATANTE: [JOSÉ CARLOS PEREIRA](NOME), brasileiro, casado, motorista, inscrito no CPF/MF sob nº [297.875.347-12](CPF), portador da cédula de identidade RG nº [23.556.901-4](RG) SSP/SP.
+contrato	residente e domiciliado na [Rua Sete de Abril, 410, casa 2](ENDERECO), Bairro Vila Industrial, CEP [12220-520](CEP), São José dos Campos/SP.
+contrato	CONTRATADA: CONSTRUTORA HORIZONTE LTDA., pessoa jurídica de direito privado, inscrita no CNPJ sob o nº [78.768.045/0001-06](CNPJ).
+contrato	As partes elegem o Foro da Comarca de Campinas para dirimir quaisquer controvérsias.
+contrato	O preço total é de R$ 48.000,00 (quarenta e oito mil reais), pagos em 12 parcelas.
+contrato	LOCATÁRIA: [Débora Cristina Matos](NOME), nascida em [22/05/1990](DATA_NASC), CPF [178.472.671-01](CPF).
+contrato	FIADORES: [Antônio Matos](NOME) e [Lúcia Helena Matos](NOME), casados sob o regime de comunhão parcial.
+contrato	Cláusula 12ª – O presente contrato é celebrado em caráter irrevogável e irretratável.
+contrato	Testemunhas:\n1. [Renata Lopes](NOME) – CPF [475.136.270-45](CPF)\n2. [Fábio Mendes](NOME) – CPF [107.981.933-95](CPF)
+contrato	O imóvel objeto deste contrato localiza-se na [Avenida Amazonas, 2.020, apartamento 302](ENDERECO).
+contrato	Notificações devem ser enviadas a [juridico@example.com.br](EMAIL).
+contrato	Pelo presente instrumento particular, de um lado [MARIA DAS GRAÇAS SOUZA](NOME), viúva, aposentada,
+contrato	O prazo de locação é de 30 (trinta) meses, iniciando-se em 01/01/2027.
+contrato	DO REAJUSTE: o aluguel será reajustado anualmente pelo IPCA/IBGE.
+contrato	Representada neste ato por seu sócio-administrador, [Ricardo Yamada](NOME), CPF [19084520564](CPF).
+contrato	Fica eleito o e-mail [ricardo.yamada@example.com](EMAIL) para comunicações oficiais.
+contrato	Procurador: Dr. [Paulo Roberto Assis](NOME), OAB/RS 45.221.
+contrato	Valor do sinal: R$ 5.000,00, pago via PIX na data da assinatura.
+contrato	Contrato nº 2026/0458 – Prestação de Serviços de Limpeza
+contrato	O CONTRATANTE declara ter recebido cópia deste instrumento.
+contrato	Endereço da filial: [Rodovia BR-116, km 32](ENDERECO), Fazenda Rio Grande/PR.
+contrato	CNPJ da filial: [99728379000118](CNPJ)
+contrato	E, por estarem assim justas e contratadas, as partes assinam o presente em 2 (duas) vias.
+cadastro	Nome: [Carlos Eduardo Brandão](NOME)\nCPF: [984.162.294-73](CPF)\nNascimento: [09/09/1979](DATA_NASC)\nCelular: [(85) 98422-1019](TELEFONE)
+cadastro	NOME DA MÃE: [FRANCISCA ALVES DE SOUSA](NOME)
+cadastro	Telefone residencial: [(85) 3254-7788](TELEFONE)
+cadastro	E-mail para contato: [contato.familia.sousa@example.com](EMAIL)
+cadastro	Endereço: [R. Pe. Valdevino, 1500, ap 203](ENDERECO) – Aldeota – Fortaleza/CE – CEP [60135-040](CEP)
+cadastro	Sexo: F | Estado civil: solteira | Escolaridade: superior completo
+cadastro	RG: [2009 1234567-8](RG) – Órgão emissor: SSPDS/CE
+cadastro	Data de admissão: 02/01/2026 | Cargo: Auxiliar Administrativo
+cadastro	[Gabriela Sato](NOME);[86628360113](CPF);[gabi.sato@example.com](EMAIL);[11991234567](TELEFONE)
+cadastro	Razão Social: Mercadinho Bom Preço ME\nCNPJ: [61.055.008/0001-40](CNPJ)\nInscrição Estadual: 123.456.789.110
+cadastro	Responsável: [Joaquim Batista](NOME) – Telefone: [(98) 3221-4455](TELEFONE)
+cadastro	Paciente: [Benedita Ramos](NOME), 78 anos, nasc. [14/07/1947](DATA_NASC), cartão SUS 700 0012 3456 7890
+cadastro	Dependente: [Heitor](NOME) – Data de nascimento: [21/12/2015](DATA_NASC)
+cadastro	Contato de emergência: [Marta](NOME) (irmã) – [(51) 99312-0087](TELEFONE)
+cadastro	Código do cliente: 000452891 | Plano: Família 300MB
+cadastro	Nome social: [Luiza](NOME)
+cadastro	Endereço comercial: [Av. Eng. Domingos Ferreira, 2589, sala 101](ENDERECO), Recife/PE
+cadastro	Login: paulo.vitor | E-mail: [paulo.vitor@example.com.br](EMAIL)
+cadastro	Matrícula: 2026104477 | Curso: Engenharia Civil | Turno: noturno
+cadastro	Tipo sanguíneo: O+ | Alergias: nenhuma
+cadastro	Escola: E.E. Rui Barbosa | Série: 7º ano
+cadastro	CNPJ (novo formato): [JS.K7V.TA9/0001-72](CNPJ)
+cadastro	CEP: [28781143](CEP) – Número: 85 – Complemento: casa
+cadastro	Data de nascimento: [05.11.1983](DATA_NASC) | Naturalidade: Belém/PA
+ticket	Usuária [Karina Vasconcelos](NOME) não consegue acessar o VPN desde a troca de senha.
+ticket	Solicito reset de MFA para [karina.vasconcelos@example.com](EMAIL).
+ticket	Cliente reclama que o CPF [695.793.186-04](CPF) não é aceito no checkout (verificar se é digitação).
+ticket	Erro ao importar planilha: linha 233 com CNPJ inválido.
+ticket	Incidente P1: API de pagamentos retornando 503 desde 09:14.
+ticket	Solicitante: [Diego](NOME) (ramal 4412). Equipamento: notebook Dell patrimônio 00873.
+ticket	Pedido de exclusão (LGPD) – titular: [Simone Batista Rocha](NOME), CPF [320.807.370-40](CPF), e-mail [simone.b.rocha@example.com](EMAIL).
+ticket	O cliente pediu retorno no [(19) 99654-3310](TELEFONE) ou no fixo [(19) 3242-1100](TELEFONE).
+ticket	Atualizar endereço do cliente para [Rua Dr. Quirino, 1001, ap. 74](ENDERECO), CEP [13015-081](CEP).
+ticket	Fechado. Causa raiz: certificado expirado no balanceador.
+ticket	Reaberto por [Leonardo Pacheco](NOME): o erro voltou.
+ticket	Ao cadastrar a data [31/04/1990](DATA_NASC) o sistema aceita, deveria bloquear.
+ticket	Duplicidade: o fornecedor aparece com CNPJ [28.382.226/0001-13](CNPJ) e com [86164252000171](CNPJ).
+ticket	Bloquear acesso do ex-funcionário [Rogério Lins](NOME) imediatamente.
+ticket	Prazo de SLA estourado (48h).
+ticket	Analista responsável: [Priscila Moura](NOME). Status: aguardando terceiro.
+ticket	A mensagem de erro mostra o e-mail de outro cliente ([andre.f@example.com](EMAIL)) na tela!
+ticket	Migração do banco agendada para domingo, 3h da manhã.
+ticket	Abrir chamado com a Microsoft sobre licenças do Office.
+ticket	A senhora [Ivone](NOME) ligou três vezes hoje, número [(27) 99701-2244](TELEFONE).
+ticket	O RG [MG 12.345.678](RG) aparece com formatação errada no PDF.
+ticket	Paciente [Otávio Guimarães](NOME), nasc. [30/11/1961](DATA_NASC), não consegue agendar pelo app.
+ticket	Rodar novamente o job de conciliação de 20/11.
+ticket	Usuário relatou que o botão salvar some no Safari.
+log	2026-11-20T13:44:02Z INFO auth.login success user=[mariana.c@example.com](EMAIL) ip=200.155.10.4
+log	2026-11-20 13:44:05 WARN customer.update invalid_cpf value=[764.725.877-15](CPF)
+log	{"level":"info","event":"order.created","order_id":"ORD-99812","customer":"[Felipe Antunes](NOME)","phone":"[+5531988127744](TELEFONE)"}
+log	ERROR 2026-11-21 02:00:01 cron.backup failed: disk quota exceeded
+log	DEBUG req body: cpf=[88413301718](CPF)&nome=[Rita+de+Cassia](NOME)&cep=[87661596](CEP)
+log	INFO 200 GET /v2/customers/[56820525877](CPF)/orders 41ms
+log	INFO 404 GET /v2/zipcode/[93228670](CEP) 3ms
+log	WARN rate limit exceeded for client_id=a81f23 (120 req/min)
+log	INFO nfe emitida chave=35261112345678000195550010000012341000012345
+log	INFO email sent to=[rh@example.com.br](EMAIL) template=welcome
+log	audit: user [joao.admin@example.com](EMAIL) exported customer [Larissa Freitas](NOME) (id 88213)
+log	2026-11-22T08:00:00Z INFO scheduler tick ok
+log	[2026-11-22 10:31:17] kyc.check name="[Marcelo Dantas](NOME)" birth="[1985-06-14](DATA_NASC)" doc=[983.194.893-93](CPF) result=approved
+log	pix.received amount=150.00 payer_doc=[94948214000138](CNPJ) e2e=E1234567820261122103100000001
+log	sms.dispatch to=[11987650000](TELEFONE) status=delivered provider=twilio
+log	INFO worker-3 processed 1520 messages in 2.3s
+log	ERROR could not geocode address "[Rua Fictícia, 99](ENDERECO)" cep=[99999-999](CEP)
+log	TRACE span_id=7f2c1a9b0e3d parent=0000000000000000 duration=12ms
+log	INFO user_id=55127 updated phone from [21998001122](TELEFONE) to [21998003344](TELEFONE)
+log	WARN slow query (2.1s): SELECT * FROM orders WHERE created_at > '2026-11-01'
+log	INFO healthcheck /readyz 200
+log	update customers set email='[viviane.r@example.com](EMAIL)' where id=3321;
+ocorrencia	Comparece a esta Delegacia a Sra. [ANA PAULA DE OLIVEIRA](NOME), RG [8.123.456](RG), residente na [Rua Ceará, 312](ENDERECO), Bairro Funcionários, nesta capital.
+ocorrencia	Relata que, por volta das 21h, foi abordada por dois indivíduos em uma motocicleta preta.
+ocorrencia	Foram subtraídos: um aparelho celular Samsung, documentos pessoais e R$ 200,00 em espécie.
+ocorrencia	A vítima informa que recebeu mensagens do número [(11) 94456-0099](TELEFONE) se passando por sua filha.
+ocorrencia	Transferiu R$ 3.500,00 via PIX para a chave [621.052.185-12](CPF), em nome de [Jéssica Albuquerque](NOME).
+ocorrencia	Testemunha: [Raimundo Nonato Silva](NOME), vigilante, telefone [(91) 98111-2233](TELEFONE).
+ocorrencia	O autor, conhecido como "Neguinho", não foi localizado.
+ocorrencia	A ocorrência foi registrada na Av. Paulista, em frente ao MASP.
+ocorrencia	Vítima: [Lucas Ferreira Gonçalves](NOME), 17 anos, nascido em [08/03/2009](DATA_NASC), acompanhado de seu responsável legal.
+ocorrencia	O veículo, placa ABC1D23, foi encontrado abandonado na Marginal Pinheiros.
+ocorrencia	Comunicante: [Teresa Cristina Melo](NOME), CPF [491.452.441-46](CPF), e-mail [teresa.melo@example.com](EMAIL).
+ocorrencia	Natureza: estelionato (art. 171 do Código Penal).
+ocorrencia	A declarante teve sua conta de e-mail [ju.martins@example.com](EMAIL) invadida e usada para pedir dinheiro.
+ocorrencia	O fato ocorreu na [Rua Augusta, 1500](ENDERECO), onde a vítima reside.
+ocorrencia	Nada mais disse nem lhe foi perguntado.
+ocorrencia	A empresa Supermercado Central Ltda., CNPJ [06.460.013/0001-20](CNPJ), comunica furto de mercadorias.
+ocorrencia	Desaparecido: [Enzo Gabriel Rocha](NOME), visto pela última vez no Terminal Rodoviário.
+ocorrencia	Contato da família: [(84) 99877-5544](TELEFONE), falar com [Sandra](NOME).
+ocorrencia	Boletim de ocorrência nº 2026-00123456, lavrado em 22/11/2026.
+ocorrencia	Os policiais militares Sd. [Pereira](NOME) e Cb. [Santos](NOME) atenderam a ocorrência.
+outros	Parabéns pelo aniversário, dona [Zefinha](NOME)! Que Deus te abençoe 🙏
+outros	Receita: dipirona 500mg, 1 comprimido de 6/6h. Paciente: [Bruno Leal](NOME).
+outros	Vendo bicicleta aro 29, R$ 1.200. Interessados chamar no [(48) 99633-1200](TELEFONE).
+outros	Precisa-se de diarista no bairro Meireles. Falar com [Cláudia](NOME).
+outros	Achei uma carteira com o RG de [Igor Bastos](NOME) na praça, alguém conhece?
+outros	O ônibus 875A não passou hoje de novo.
+outros	A reunião de condomínio será no salão de festas, às 19h30.
+outros	Aluga-se apartamento na [Rua Marquês de Abrantes, 120](ENDERECO), Flamengo. Tratar com Seu [Jorge](NOME).
+outros	Para doações: PIX [11895579000114](CNPJ) (Associação Amigos do Bairro).
+outros	Inscrições pelo e-mail [inscricoes@example.org](EMAIL) até o dia 10.
+outros	O Brasil tem 26 estados e um Distrito Federal.
+outros	Hoje o dólar fechou em R$ 5,43.
+outros	Atenção: nunca informe sua senha ou o código de verificação por telefone.
+outros	O São Paulo venceu o Flamengo por 2 a 1 no Morumbi.
+outros	Minha avó [Maria Benedita](NOME) completou 100 anos em [15/08/1926](DATA_NASC)!
+outros	Contato do síndico: [Valdir](NOME), apto 32, [(31) 99101-8899](TELEFONE).
+outros	Este e-mail e seus anexos são confidenciais.
+outros	Feliz Natal e um próspero Ano Novo!
+outros	O CPF é um número de 11 dígitos emitido pela Receita Federal.
+outros	O CNPJ alfanumérico começou a ser emitido em julho de 2026.
+outros	Meu nome é [Aline](NOME) e eu odeio formulários que pedem CPF pra tudo.
+outros	Tutorial: como consultar o CEP no site dos Correios.
+outros	Vencedora do sorteio: [Rayssa Mendes](NOME), de Itajaí.
+outros	A linha 0800 727 0000 atende 24 horas.
+outros	O código de rastreio é NL123456789BR.
