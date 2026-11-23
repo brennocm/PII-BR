@@ -1,8 +1,12 @@
 """PII-BR no Hugging Face Spaces: detecta, destaca e mascara dados pessoais em PT-BR.
 
 Privacidade: o texto só existe em memória durante a requisição. O app não registra o
-conteúdo em log, não usa flagging nem analytics, e apaga os arquivos enviados depois de
-processá-los.
+conteúdo em log, não usa flagging nem analytics, apaga o arquivo enviado assim que o lê e
+apaga o arquivo mascarado depois de alguns minutos.
+
+Limites: cada requisição processa no máximo `MAX_CHARS` caracteres de texto colado ou
+`MAX_FILE_CHARS` caracteres / `MAX_CELLS` células de um arquivo. O Space gratuito atende
+uma requisição por vez, então sem limite um arquivo grande travaria a demo para todos.
 """
 
 from __future__ import annotations
@@ -12,6 +16,8 @@ import io
 import logging
 import os
 import tempfile
+import time
+from collections.abc import Callable
 from functools import cache
 from pathlib import Path
 from typing import Any
@@ -28,8 +34,14 @@ log = logging.getLogger("pii-br")  # só eventos de ciclo de vida, nunca o texto
 # No Space, o HF define SPACE_AUTHOR_NAME; o modelo padrão é o repo homônimo do autor.
 _AUTHOR = os.environ.get("SPACE_AUTHOR_NAME")
 MODEL_ID = os.environ.get("PII_BR_MODEL", f"{_AUTHOR}/PII-BR" if _AUTHOR else "")
+MODEL_REVISION = os.environ.get("PII_BR_MODEL_REVISION") or None  # commit fixo do modelo
 MAX_CHARS = 20_000
-MAX_ROWS = 5_000
+MAX_FILE_CHARS = 100_000
+MAX_CELLS = 2_000
+MAX_UPLOAD_BYTES = 1_048_576
+OUTPUT_DIR = Path(tempfile.gettempdir()) / "pii-br-saida"
+OUTPUT_TTL_SECONDS = 600
+csv.field_size_limit(MAX_UPLOAD_BYTES)
 STRATEGY_LABELS: dict[str, Strategy] = {
     "Redação: [CPF]": "redact",
     "Máscara parcial: ***.456.789-**": "partial",
@@ -92,7 +104,7 @@ def get_detector() -> tuple[Detector, str]:
     try:
         from pii_br.model import NerModel
 
-        model = NerModel(MODEL_ID, quantize=True)
+        model = NerModel(MODEL_ID, quantize=True, revision=MODEL_REVISION)
     except Exception as exc:  # o app continua útil mesmo sem o modelo
         log.warning("modelo indisponível (%s): %s", MODEL_ID, type(exc).__name__)
         return Detector(), f"Modelo `{MODEL_ID}` indisponível agora: só {rules_only}."
@@ -138,7 +150,9 @@ def analyze(
     text: str, strategy_label: str, entities: list[str], threshold: float, masker: Masker | None
 ) -> tuple[list[tuple[str, str | None]], str, list[dict[str, Any]], str, Masker]:
     masker = masker or Masker()  # um sal por sessão, criado na primeira requisição
-    text = (text or "")[:MAX_CHARS]
+    text = text or ""
+    cut = len(text) > MAX_CHARS
+    text = text[:MAX_CHARS]
     if not text.strip():
         return [], "", [], "Cole um texto ou escolha um exemplo.", masker
     spans = _detect(text, entities, threshold)
@@ -150,18 +164,112 @@ def analyze(
             f" {alerts} documento(s) com dígito verificador inválido, mascarado(s) mesmo "
             "assim: pode ser erro de digitação de um documento real."
         )
+    if cut:
+        summary += (
+            f" **Texto cortado:** só os primeiros {_br(MAX_CHARS)} caracteres foram analisados; "
+            "o resto não aparece no resultado."
+        )
     return _highlight(text, spans), masked, _span_rows(spans), summary, masker
 
 
 # ------------------------------------------------------------------- arquivos
 
 
+def _br(n: int) -> str:
+    return f"{n:,}".replace(",", ".")
+
+
+def _dialect(sample: str) -> type[csv.Dialect]:
+    """Separador mais frequente no cabeçalho: vírgula, ponto e vírgula (padrão do Excel em
+    pt-BR), tab ou barra vertical. O `csv.Sniffer` erra quando as linhas têm tamanhos
+    diferentes, o que é comum em planilhas exportadas."""
+    header = sample.split("\n", 1)[0]
+    delimiter = max(",;\t|", key=header.count)
+    if not header.count(delimiter):
+        return csv.excel
+
+    class Dialect(csv.excel):
+        pass
+
+    Dialect.delimiter = delimiter
+    return Dialect
+
+
 def read_columns(file_path: str | None) -> dict[str, Any]:
-    if not file_path or not file_path.lower().endswith(".csv"):
-        return gr.update(choices=[], value=[], visible=False)
-    with open(file_path, encoding="utf-8-sig", newline="") as f:
-        header = next(csv.reader(f), [])
-    return gr.update(choices=header, value=header, visible=True)
+    hidden = gr.update(choices=[], value=[], visible=False)
+    if not file_path or not file_path.lower().endswith(".csv") or not Path(file_path).exists():
+        return hidden
+    try:
+        with open(file_path, encoding="utf-8-sig", newline="") as f:
+            sample = f.read(8192)
+            f.seek(0)
+            header = next(csv.reader(f, _dialect(sample)), [])
+    except (UnicodeDecodeError, csv.Error):
+        return hidden
+    names = list(dict.fromkeys(header))
+    return gr.update(choices=names, value=names, visible=True)
+
+
+def _purge_outputs(now: float) -> None:
+    """Apaga arquivos mascarados antigos: o Gradio já copiou cada um para o cache dele."""
+    for old in OUTPUT_DIR.glob("pii-br-mascarado-*"):
+        try:
+            if now - old.stat().st_mtime > OUTPUT_TTL_SECONDS:
+                old.unlink()
+        except FileNotFoundError:
+            pass
+
+
+def _write_output(result: str, suffix: str) -> str:
+    _purge_outputs(time.time())
+    OUTPUT_DIR.mkdir(mode=0o700, exist_ok=True)
+    fd, out_path = tempfile.mkstemp(prefix="pii-br-mascarado-", suffix=suffix, dir=OUTPUT_DIR)
+    with os.fdopen(fd, "w", encoding="utf-8", newline="") as f:
+        f.write(result)
+    return out_path
+
+
+class _Budget:
+    """Conta caracteres e chamadas ao detector de um arquivo; ver os limites no topo."""
+
+    def __init__(self) -> None:
+        self.chars = 0
+        self.cells = 0
+
+    def take(self, value: str) -> bool:
+        if self.chars + len(value) > MAX_FILE_CHARS or self.cells >= MAX_CELLS:
+            return False
+        self.chars += len(value)
+        self.cells += 1
+        return True
+
+
+def _mask_csv(
+    raw: str, columns: list[str], mask_text: Callable[[str], tuple[str, int]]
+) -> tuple[str, int, str]:
+    dialect = _dialect(raw)
+    rows = csv.reader(io.StringIO(raw), dialect)
+    header = next(rows, [])
+    targets = [i for i, name in enumerate(header) if name in set(columns)]
+    out = io.StringIO()
+    writer = csv.writer(out, dialect)
+    writer.writerow(header)
+    budget, found, note = _Budget(), 0, ""
+    for line, row in enumerate(rows, start=2):
+        cells = [row[i] for i in targets if i < len(row) and row[i]]
+        if not all(map(budget.take, cells)):
+            note = (
+                f" **Arquivo cortado na linha {line}:** o limite da demo é "
+                f"{_br(MAX_FILE_CHARS)} caracteres ou {_br(MAX_CELLS)} células; "
+                "as linhas seguintes não estão no resultado."
+            )
+            break
+        for i in targets:
+            if i < len(row) and row[i]:
+                row[i], n = mask_text(row[i])
+                found += n
+        writer.writerow(row)
+    return out.getvalue(), found, note
 
 
 def process_file(
@@ -171,16 +279,20 @@ def process_file(
     entities: list[str],
     threshold: float,
     masker: Masker | None,
-) -> tuple[str | None, str, Masker]:
+) -> tuple[str | None, str, Masker, None]:
+    """Devolve (arquivo mascarado, resumo, sessão, None). O último valor limpa o campo de
+    upload, porque o arquivo enviado é apagado do disco assim que é lido."""
     masker = masker or Masker()
     if not file_path:
-        return None, "Envie um arquivo .txt ou .csv.", masker
+        return None, "Envie um arquivo .txt ou .csv.", masker, None
     source = Path(file_path)
     strategy = STRATEGY_LABELS[strategy_label]
     try:
         raw = source.read_text(encoding="utf-8-sig")
+    except FileNotFoundError:
+        return None, "O arquivo já foi processado e apagado; envie-o de novo.", masker, None
     except UnicodeDecodeError:
-        return None, "Não consegui ler o arquivo: salve-o em UTF-8 e envie de novo.", masker
+        return None, "Não consegui ler o arquivo: salve-o em UTF-8 e envie de novo.", masker, None
     finally:
         source.unlink(missing_ok=True)  # o upload não fica no disco do Space
 
@@ -188,29 +300,23 @@ def process_file(
         spans = _detect(value, entities, threshold)
         return masker.mask(value, spans, strategy), len(spans)
 
-    found = 0
     if source.suffix.lower() == ".csv":
-        reader = csv.DictReader(io.StringIO(raw))
-        fields = list(reader.fieldnames or [])
-        out = io.StringIO()
-        writer = csv.DictWriter(out, fieldnames=fields)
-        writer.writeheader()
-        for i, row in enumerate(reader):
-            if i >= MAX_ROWS:
-                break
-            for col in columns:
-                if row.get(col):
-                    row[col], n = mask_text(row[col])
-                    found += n
-            writer.writerow(row)
-        result, suffix = out.getvalue(), ".csv"
+        try:
+            result, found, note = _mask_csv(raw, columns, mask_text)
+        except csv.Error:
+            return None, "Não consegui ler o CSV: confira aspas e separadores.", masker, None
+        suffix = ".csv"
     else:
-        result, found = mask_text(raw[: MAX_CHARS * 10])
+        note = ""
+        if len(raw) > MAX_FILE_CHARS:
+            note = (
+                f" **Arquivo cortado:** só os primeiros {_br(MAX_FILE_CHARS)} caracteres foram "
+                "analisados; o resto não está no resultado."
+            )
+        result, found = mask_text(raw[:MAX_FILE_CHARS])
         suffix = ".txt"
-    fd, out_path = tempfile.mkstemp(prefix="pii-br-mascarado-", suffix=suffix)
-    with os.fdopen(fd, "w", encoding="utf-8", newline="") as f:
-        f.write(result)
-    return out_path, f"{found} dado(s) pessoal(is) mascarado(s) no arquivo.", masker
+    summary = f"{found} dado(s) pessoal(is) mascarado(s) no arquivo.{note}"
+    return _write_output(result, suffix), summary, masker, None
 
 
 # ------------------------------------------------------------------ interface
@@ -299,7 +405,7 @@ def build_demo() -> gr.Blocks:
         run_file.click(
             process_file,
             [file_in, columns, strategy, entities, threshold, masker],
-            [file_out, file_summary, masker],
+            [file_out, file_summary, masker, file_in],
         )
     return demo
 
